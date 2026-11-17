@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="id" data-theme="light">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Content-Security-Policy"
+    content="default-src 'self' data: blob:; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://script.google.com https://script.googleusercontent.com; manifest-src 'self'; media-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'">
+  <meta name="description"
+    content="Kuradapt — Kurikulum Pendamping lintas jenjang SD hingga Kuliah. Papan pengumuman live, materi, latihan, transkrip nilai nyata, dan dokumen digital. Diperbarui tiap bulan.">
+  <title>Kuradapt — Kurikulum Hidup, Masa Depan Terarah</title>
+  <link rel="icon"
+    href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%232563eb'/%3E%3Cpath d='M14 64c8-5 20-6 32-1.5v22C34 80 22 81 14 86z' fill='%23ffffff'/%3E%3Cpath d='M86 64c-8-5-20-6-32-1.5v22c14-4.5 26-3.5 32 1.5z' fill='%23ffffff'/%3E%3Crect x='24' y='18' width='8' height='36' rx='4' fill='%23ffffff'/%3E%3Cpath d='M36 40 56 55' stroke='%23ffffff' stroke-width='8' stroke-linecap='round'/%3E%3Cpath d='M36 37 58 19' stroke='%23ffffff' stroke-width='8' stroke-linecap='round'/%3E%3Cpath d='M70 8 54 12l9 10z' fill='%23ffffff'/%3E%3Cpath d='M80 24l2.6 6.4 6.4 2.6-6.4 2.6-2.6 6.4-2.6-6.4-6.4-2.6 6.4-2.6z' fill='%23fbbf24'/%3E%3C/svg%3E">
+  <meta name="theme-color" content="#f6f8fc">
+  <meta name="author" content="DAFFTECH — https://daffaull18.github.io/dafftech-v2/">
+  <meta name="copyright" content="© 2026 DAFFTECH — All Rights Reserved">
+  <meta property="og:title" content="Kuradapt — Kurikulum Hidup, Masa Depan Terarah">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Kuradapt by DAFFTECH">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+    rel="stylesheet">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <link rel="stylesheet" href="styles.css">
+  <script src="boot.js"></script>
+</head>
+
+<body>
+
+  <script src="boot-route.js"></script>
+
+  <svg style="position:absolute;width:0;height:0;overflow:hidden" aria-hidden="true" focusable="false">
+    <defs>
+      <linearGradient id="kuradaptGrad" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0" stop-color="#3b82f6" />
+        <stop offset="1" stop-color="#1d4ed8" />
+      </linearGradient>
+      <linearGradient id="kuradaptPage" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#ffffff" />
+        <stop offset="1" stop-color="#dbeafe" />
+      </linearGradient>
+    </defs>
+
+    <!-- ===== LOGO KURADAPT: buku terbuka + K panah tumbuh + spark ===== -->
+    <symbol id="logo-kuradapt" viewBox="0 0 64 64">
+      <rect x="2" y="2" width="60" height="60" rx="16" fill="url(#kuradaptGrad)" />
+      <path d="M8 41.5c5.5-3.2 13.5-3.8 22-1v14c-8.5-2.8-16.5-2.2-22 1z" fill="url(#kuradaptPage)" />
+      <path d="M56 41.5c-5.5-3.2-13.5-3.8-22-1v14c8.5-2.8 16.5-2.2 22 1z" fill="url(#kuradaptPage)" />
+      <path d="M32 40.5v14" stroke="#1d4ed8" stroke-width="1.6" stroke-linecap="round" fill="none" opacity=".55" />
+      <rect x="14" y="13" width="5.5" height="24" rx="2.6" fill="#ffffff" />
+      <path d="M21.5 27.5 34.5 37.5" stroke="#ffffff" stroke-width="5" stroke-linecap="round" fill="none" />
+      <path d="M21.5 25.5 36 14" stroke="#ffffff" stroke-width="5" stroke-linecap="round" fill="none" />
+      <path d="M44.5 7 35 10l6.5 5.5z" fill="#ffffff" />
+      <path d="M52 10.5l1.5 3.8 3.8 1.5-3.8 1.5-1.5 3.8-1.5-3.8-3.8-1.5 3.8-1.5z" fill="#fbbf24" />
+    </symbol>
+
+    <symbol id="i-spark" viewBox="0 0 24 24">
+      <path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9L12 3z" />
+      <path d="M19 16l.8 2.2L22 19l-2.2.8L19 22l-.8-2.2L16 19l2.2-.8L19 16z" />
+    </symbol>
+    <symbol id="i-cap" viewBox="0 0 24 24">
+      <path d="M2 9l10-5 10 5-10 5L2 9z" />
+      <path d="M6 11.5V16c0 1.5 2.7 3 6 3s6-1.5 6-3v-4.5" />
+      <path d="M22 9v5" />
+    </symbol>
+    <symbol id="i-target" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="9" />
+      <circle cx="12" cy="12" r="5" />
+      <circle cx="12" cy="12" r="1.4" />
+    </symbol>
+    <symbol id="i-check" viewBox="0 0 24 24">
+      <path d="M4 12.5l5 5L20 6.5" />
+    </symbol>
+    <symbol id="i-clip" viewBox="0 0 24 24">
+      <rect x="5" y="4" width="14" height="17" rx="2" />
+      <path d="M9 4V3h6v1" />
+      <path d="M8.5 10h7M8.5 14h7M8.5 18h4" />
+    </symbol>
+    <symbol id="i-rocket" viewBox="0 0 24 24">
+      <path d="M12 2c3.5 2 5.5 5.5 5.5 9.5L14 15h-4L6.5 11.5C6.5 7.5 8.5 4 12 2z" />
+      <circle cx="12" cy="10" r="2" />
+      <path d="M9.5 15.5L7 21l3-1.5M14.5 15.5L17 21l-3-1.5" />
+    </symbol>
+    <symbol id="i-sprout" viewBox="0 0 24 24">
+      <path d="M12 21v-8" />
+      <path d="M12 13C12 9 9 6.5 5 6.5c0 4 3 6.5 7 6.5z" />
+      <path d="M12 13c0-3.5 2.5-6 6-6 0 3.5-2.5 6-6 6z" />
+    </symbol>
+    <symbol id="i-scroll" viewBox="0 0 24 24">
+      <path d="M6 4h11a2 2 0 012 2v13a2 2 0 002 2H8a2 2 0 01-2-2V4z" />
+      <path d="M6 4a2 2 0 00-2 2v2h2" />
+      <path d="M9.5 9h6M9.5 13h6M9.5 17h4" />
+    </symbol>
+    <symbol id="i-trend" viewBox="0 0 24 24">
+      <path d="M3 17l6-6 4 4 8-8" />
+      <path d="M15 7h6v6" />
+    </symbol>
+    <symbol id="i-chart" viewBox="0 0 24 24">
+      <path d="M4 20V10M10 20V4M16 20v-7M22 20H2" />
+    </symbol>
+    <symbol id="i-chartdown" viewBox="0 0 24 24">
+      <path d="M3 7l6 6 4-4 8 8" />
+      <path d="M15 17h6v-6" />
+    </symbol>
+    <symbol id="i-users" viewBox="0 0 24 24">
+      <circle cx="9" cy="8" r="3.5" />
+      <path d="M2.5 20c0-3.6 2.9-6 6.5-6s6.5 2.4 6.5 6" />
+      <path d="M16 5.2a3.5 3.5 0 010 6.6M18 14.5c2.1.9 3.5 2.9 3.5 5.5" />
+    </symbol>
+    <symbol id="i-trophy" viewBox="0 0 24 24">
+      <path d="M7 4h10v6a5 5 0 01-10 0V4z" />
+      <path d="M7 6H4.5A2.5 2.5 0 007 11M17 6h2.5A2.5 2.5 0 0117 11" />
+      <path d="M12 15v3M8.5 21h7l-.7-3h-5.6L8.5 21z" />
+    </symbol>
+    <symbol id="i-file" viewBox="0 0 24 24">
+      <path d="M6 3h8l4 4v14H6V3z" />
+      <path d="M14 3v4h4" />
+      <path d="M9 12h6M9 16h6" />
+    </symbol>
+    <symbol id="i-folder" viewBox="0 0 24 24">
+      <path d="M3 6a1 1 0 011-1h5l2 2.5h8a1 1 0 011 1V19H3V6z" />
+    </symbol>
+    <symbol id="i-hand" viewBox="0 0 24 24">
+      <path d="M8 11V5.5a1.5 1.5 0 013 0V11" />
+      <path d="M11 10.5V4.5a1.5 1.5 0 013 0V11" />
+      <path d="M14 11V6.5a1.5 1.5 0 013 0V14c0 4-2.5 7-6.5 7S4 18 4 14v-2.5a1.5 1.5 0 013 0" />
+    </symbol>
+    <symbol id="i-user" viewBox="0 0 24 24">
+      <circle cx="12" cy="8" r="4" />
+      <path d="M4.5 20.5c0-4.1 3.4-7 7.5-7s7.5 2.9 7.5 7" />
+    </symbol>
+    <symbol id="i-bolt" viewBox="0 0 24 24">
+      <path d="M13 2L4.5 13.5H11L9.5 22 19 10h-6.5L13 2z" />
+    </symbol>
+    <symbol id="i-warn" viewBox="0 0 24 24">
+      <path d="M12 3L2 20h20L12 3z" />
+      <path d="M12 9v5M12 17.2v.1" />
+    </symbol>
+    <symbol id="i-link" viewBox="0 0 24 24">
+      <path d="M10 13a4.5 4.5 0 006.4 0l3-3a4.5 4.5 0 00-6.4-6.4l-1.5 1.5" />
+      <path d="M14 11a4.5 4.5 0 00-6.4 0l-3 3a4.5 4.5 0 006.4 6.4l1.5-1.5" />
+    </symbol>
+    <symbol id="i-flag" viewBox="0 0 24 24">
+      <path d="M5 21V4" />
+      <path d="M5 4h13l-2.5 4.5L18 13H5" />
+    </symbol>
+    <symbol id="i-pen" viewBox="0 0 24 24">
+      <path d="M4 20l1.2-4.2L16.5 4.5a2.1 2.1 0 013 3L8.2 18.8 4 20z" />
+      <path d="M14.5 6.5l3 3" />
+    </symbol>
+    <symbol id="i-unlock" viewBox="0 0 24 24">
+      <rect x="4.5" y="10.5" width="15" height="10" rx="2" />
+      <path d="M8 10.5V7a4 4 0 017.5-2" />
+    </symbol>
+    <symbol id="i-lock" viewBox="0 0 24 24">
+      <rect x="4.5" y="10.5" width="15" height="10" rx="2" />
+      <path d="M8 10.5V7a4 4 0 018 0v3.5" />
+    </symbol>
+    <symbol id="i-cloud" viewBox="0 0 24 24">
+      <path d="M7 18.5a4.5 4.5 0 01-.4-9A6 6 0 0118 10.5a4 4 0 01-.5 8H7z" />
+    </symbol>
+    <symbol id="i-refresh" viewBox="0 0 24 24">
+      <path d="M20 11a8 8 0 10-1.7 6" />
+      <path d="M20 5v6h-6" />
+    </symbol>
+    <symbol id="i-party" viewBox="0 0 24 24">
+      <path d="M3 21l5.5-14L17 13 3 21z" />
+      <path
+        d="M14 3.5l.7 1.9 1.9.7-1.9.7-.7 1.9-.7-1.9-1.9-.7 1.9-.7.7-1.9zM19 9l.6 1.5L21 11l-1.4.6L19 13l-.6-1.4L17 11l1.4-.5L19 9z" />
+      <path d="M9.5 8.5L11 7" />
+    </symbol>
+    <symbol id="i-brain" viewBox="0 0 24 24">
+      <path d="M12 5a3 3 0 00-5.6-1.5A2.8 2.8 0 004.5 8a3 3 0 00.5 5.5A3 3 0 008 18.5a3 3 0 004-1V5z" />
+      <path d="M12 5a3 3 0 015.6-1.5A2.8 2.8 0 0119.5 8a3 3 0 01-.5 5.5A3 3 0 0116 18.5a3 3 0 01-4-1" />
+    </symbol>
+    <symbol id="i-books" viewBox="0 0 24 24">
+      <path d="M4 5.5A2.5 2.5 0 016.5 3H11v16H6.5A2.5 2.5 0 004 21.5v-16z" />
+      <path d="M20 5.5A2.5 2.5 0 0017.5 3H13v16h4.5a2.5 2.5 0 012.5 2.5v-16z" />
+    </symbol>
+    <symbol id="i-print" viewBox="0 0 24 24">
+      <path d="M7 8V3h10v5" />
+      <rect x="3.5" y="8" width="17" height="8" rx="2" />
+      <path d="M7 14h10v7H7v-7z" />
+    </symbol>
+    <symbol id="i-compass" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="9" />
+      <path d="M15.5 8.5l-2 5-5 2 2-5 5-2z" />
+    </symbol>
+    <symbol id="i-puzzle" viewBox="0 0 24 24">
+      <path
+        d="M9.5 4h5v2.5a2 2 0 110 4V11h2.5a2 2 0 110 4H14.5v2.5a2 2 0 11-4 0V15H8a2 2 0 110-4h2.5V8a2 2 0 110-4h-.999z"
+        transform="translate(0 1)" />
+    </symbol>
+    <symbol id="i-game" viewBox="0 0 24 24">
+      <rect x="2.5" y="7.5" width="19" height="10" rx="5" />
+      <path d="M7 10.5v4M5 12.5h4" />
+      <circle cx="16" cy="11.5" r="1" />
+      <circle cx="18.5" cy="14" r="1" />
+    </symbol>
+    <symbol id="i-gear" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="3" />
+      <path
+        d="M12 2.8l1.2 2.3 2.5-.6.6 2.5 2.3 1.2-1.4 2.1 1.4 2.1-2.3 1.2-.6 2.5-2.5-.6L12 21.2l-1.2-2.3-2.5.6-.6-2.5-2.3-1.2 1.4-2.1-1.4-2.1 2.3-1.2.6-2.5 2.5.6L12 2.8z" />
+    </symbol>
+    <symbol id="i-search" viewBox="0 0 24 24">
+      <circle cx="10.5" cy="10.5" r="6.5" />
+      <path d="M15.5 15.5L21 21" />
+    </symbol>
+    <symbol id="i-shuffle" viewBox="0 0 24 24">
+      <path d="M3 6h3.5c5 0 6 12 11 12H21" />
+      <path d="M3 18h3.5c2.3 0 3.7-2.4 5-5 1.3-2.6 2.7-5 5-5H21" />
+      <path d="M18.5 3.5L21 6l-2.5 2.5M18.5 15.5L21 18l-2.5 2.5" />
+    </symbol>
+    <symbol id="i-balance" viewBox="0 0 24 24">
+      <path d="M12 4v16M6 20h12M4 8h16M4 8l-2.5 6h5L4 8zM20 8l-2.5 6h5L20 8z" />
+      <path d="M12 4l-1.5-1h3L12 4z" />
+    </symbol>
+    <symbol id="i-star" viewBox="0 0 24 24">
+      <path d="M12 3l2.7 5.8 6.3.8-4.7 4.3 1.3 6.3L12 17.2 6.4 20.2l1.3-6.3L3 9.6l6.3-.8L12 3z" />
+    </symbol>
+    <symbol id="i-fire" viewBox="0 0 24 24">
+      <path
+        d="M12 22c4 0 6.5-2.7 6.5-6.3 0-4.7-4.5-6-5.4-11.7-2.4 1.4-4.6 4.3-4.6 7.2 0 1.5.6 2.6.6 3.4 0 1-.7 1.7-1.6 1.7-1.1 0-1.8-.9-1.8-2.3 0-2.4 1.6-3.6 1.6-3.6-.4 2.7 1.4 4.4 1.4 4.4-1.2.3-1.9 1.4-1.9 2.7C6.8 19.4 9 22 12 22z" />
+    </symbol>
+    <symbol id="i-question" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="9" />
+      <path d="M9.2 9.2A3 3 0 1112 13v1.5" />
+      <path d="M12 17.5v.1" />
+    </symbol>
+    <symbol id="i-signal" viewBox="0 0 24 24">
+      <path d="M4 20h3v-4H4v4zM10.5 20h3v-8h-3v8zM17 20h3V8h-3v12z" opacity=".9" />
+      <path d="M3 3l18 18" stroke-width="1.7" />
+    </symbol>
+    <symbol id="i-drop" viewBox="0 0 24 24">
+      <path d="M12 3s6 6.3 6 10.5A6 6 0 016 13.5C6 9.3 12 3 12 3z" />
+    </symbol>
+    <symbol id="i-toolbox" viewBox="0 0 24 24">
+      <rect x="3" y="8" width="18" height="12" rx="2" />
+      <path d="M8.5 8V6a2 2 0 012-2h3a2 2 0 012 2v2M3 13h18" />
+    </symbol>
+    <symbol id="i-school" viewBox="0 0 24 24">
+      <path d="M12 3l10 5H2L12 3z" />
+      <path d="M5 10v9h14v-9" />
+      <path d="M9.5 19v-4.5h5V19" />
+      <path d="M12 3v5" />
+    </symbol>
+    <symbol id="i-pin" viewBox="0 0 24 24">
+      <path d="M9 3h6l-1 6 4 4H6l4-4-1-6z" />
+      <path d="M12 13v8" />
+    </symbol>
+    <symbol id="i-muscle" viewBox="0 0 24 24">
+      <path d="M4 9c3-3 7-3 9 0 1.5 2.2 3 2 5 1 0 4-1.5 7-5 9-4 2.5-8 .5-9-3-2-1.5-2.5-4.5-1-7z" />
+      <path d="M9 9.5c1.5-1.5 3.5-1.5 5 0" />
+    </symbol>
+    <symbol id="i-broom" viewBox="0 0 24 24">
+      <path d="M14 3l-8 8" />
+      <path d="M6 11l7 7" />
+      <path d="M4 21l3-7 6 6-7 3-2-2z" />
+    </symbol>
+    <symbol id="i-repeat" viewBox="0 0 24 24">
+      <path d="M4 9a7 7 0 0112-4l2 2" />
+      <path d="M18 3v4h-4" />
+      <path d="M20 15a7 7 0 01-12 4l-2-2" />
+      <path d="M6 21v-4h4" />
+    </symbol>
+    <symbol id="i-medal" viewBox="0 0 24 24">
+      <circle cx="12" cy="14.5" r="5.5" />
+      <path d="M9 9.5L6.5 3h11L15 9.5" />
+      <path d="M12 12l1 2.2 2.2.3-1.6 1.6.4 2.2-2-1.1-2 1.1.4-2.2-1.6-1.6 2.2-.3L12 12z" />
+    </symbol>
+    <symbol id="i-stetho" viewBox="0 0 24 24">
+      <path d="M6 3v5a4 4 0 008 0V3" />
+      <path d="M4 3h3M13 3h3" />
+      <path d="M10 12v3a5 5 0 0010 0v-1" />
+      <circle cx="20" cy="11.5" r="2" />
+    </symbol>
+    <symbol id="i-mail" viewBox="0 0 24 24">
+      <rect x="3" y="5.5" width="18" height="13" rx="2" />
+      <path d="M3.5 7l8.5 6 8.5-6" />
+    </symbol>
+    <symbol id="i-building" viewBox="0 0 24 24">
+      <path d="M4 21V5l8-2v18" />
+      <path d="M12 21V9l7 2v10" />
+      <path d="M7 8h2M7 12h2M7 16h2M15 13h1.5M15 17h1.5" />
+      <path d="M2.5 21h19" />
+    </symbol>
+    <symbol id="i-calendar" viewBox="0 0 24 24">
+      <rect x="3.5" y="5" width="17" height="16" rx="2" />
+      <path d="M3.5 10h17M8 3v4M16 3v4" />
+    </symbol>
+    <symbol id="i-calc" viewBox="0 0 24 24">
+      <rect x="5" y="3" width="14" height="18" rx="2" />
+      <path d="M8 7h8" />
+      <path d="M8.5 12h.1M12 12h.1M15.5 12h.1M8.5 16h.1M12 16h.1M15.5 16h.1" />
+    </symbol>
+    <symbol id="i-inbox" viewBox="0 0 24 24">
+      <path d="M3.5 13.5L6 5h12l2.5 8.5v5a2 2 0 01-2 2h-13a2 2 0 01-2-2v-5z" />
+      <path d="M3.5 13.5H8l1.5 2.5h5l1.5-2.5h4.5" />
+    </symbol>
+    <symbol id="i-desk" viewBox="0 0 24 24">
+      <path d="M3 6h18v9H3V6z" />
+      <path d="M6 15v5M18 15v5M3 11h18" />
+    </symbol>
+    <symbol id="i-eye" viewBox="0 0 24 24">
+      <path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z" />
+      <circle cx="12" cy="12" r="3" />
+    </symbol>
+    <symbol id="i-x" viewBox="0 0 24 24">
+      <path d="M6 6l12 12M18 6L6 18" />
+    </symbol>
+    <symbol id="i-phone" viewBox="0 0 24 24">
+      <rect x="6.5" y="2.5" width="11" height="19" rx="2.5" />
+      <path d="M10.5 5.5h3" />
+      <path d="M18.5 6.5l3-3M19.6 3.4h1.9v1.9" />
+      <path d="M12 18.3v.1" />
+    </symbol>
+    <symbol id="i-download" viewBox="0 0 24 24">
+      <path d="M12 3v12" />
+      <path d="M7.5 10.5L12 15l4.5-4.5" />
+      <path d="M4 19.5h16" />
+    </symbol>
+    <symbol id="i-play" viewBox="0 0 24 24">
+      <path d="M7.5 4.8l11.5 7.2-11.5 7.2V4.8z" />
+    </symbol>
+    <symbol id="i-receipt" viewBox="0 0 24 24">
+      <path d="M5.5 3h13v18l-2.2-1.6L14 21l-2-1.6L10 21l-2.3-1.6L5.5 21V3z" />
+      <path d="M8.5 8h7M8.5 12h7M8.5 16h4" />
+    </symbol>
+    <symbol id="i-moon" viewBox="0 0 24 24">
+      <path d="M20.5 14.5A8.5 8.5 0 1 1 9.5 3.5a7 7 0 0 0 11 11z" />
+    </symbol>
+    <symbol id="i-sun" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="4" />
+      <path
+        d="M12 2.5V5M12 19v2.5M2.5 12H5M19 12h2.5M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M19.1 4.9l-1.8 1.8M6.7 17.3l-1.8 1.8" />
+    </symbol>
+    <symbol id="i-menu" viewBox="0 0 24 24">
+      <path d="M4 7h16M4 12h16M4 17h16" />
+    </symbol>
+    <symbol id="i-bell" viewBox="0 0 24 24">
+      <path d="M18 9a6 6 0 1 0-12 0c0 6-2.5 7-2.5 7h17S18 15 18 9z" />
+      <path d="M10.3 20a2 2 0 0 0 3.4 0" />
+    </symbol>
+    <symbol id="i-upload" viewBox="0 0 24 24">
+      <path d="M12 16V4" />
+      <path d="M7.5 8.5 12 4l4.5 4.5" />
+      <path d="M4 16v2.5A2.5 2.5 0 0 0 6.5 21h11a2.5 2.5 0 0 0 2.5-2.5V16" />
+    </symbol>
+    <symbol id="i-trash" viewBox="0 0 24 24">
+      <path d="M4 7h16" />
+      <path d="M9 7V5a1.5 1.5 0 0 1 1.5-1.5h3A1.5 1.5 0 0 1 15 5v2" />
+      <path d="M6.5 7l.8 12a2 2 0 0 0 2 1.9h5.4a2 2 0 0 0 2-1.9L17.5 7" />
+      <path d="M10 11v6M14 11v6" />
+    </symbol>
+    <symbol id="i-clock" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="8.5" />
+      <path d="M12 7.5V12l3 2" />
+    </symbol>
+    <symbol id="i-logout" viewBox="0 0 24 24">
+      <path d="M14 4h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-4" />
+      <path d="M10 8l-4 4 4 4" />
+      <path d="M6 12h10" />
+    </symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24">
+      <path d="M12 5v14M5 12h14" />
+    </symbol>
+    <symbol id="i-arrow" viewBox="0 0 24 24">
+      <path d="M5 12h13" />
+      <path d="M13 6l6 6-6 6" />
+    </symbol>
+    <symbol id="i-shield" viewBox="0 0 24 24">
+      <path d="M12 3l7 3v5.5c0 4.4-3 8.2-7 9.5-4-1.3-7-5.1-7-9.5V6l7-3z" />
+      <path d="M9 12l2 2 4-4" />
+    </symbol>
+  </svg>
+
+  <!-- dekorasi latar -->
+  <div id="bgDeco" aria-hidden="true">
+    <span class="orb o1"></span>
+    <span class="orb o2"></span>
+    <span class="orb o3"></span>
+  </div>
+
+  <!-- ============ TOPBAR ============ -->
+  <header id="topbar">
+    <div class="wrap tb-in">
+      <a href="#/beranda" class="brand" aria-label="Kuradapt beranda">
+        <span class="mark"><svg class="logo-i">
+            <use href="#logo-kuradapt"></use>
+          </svg></span>
+        <span class="txt"><b>Kuradapt</b><small>Kurikulum Hidup · Masa Depan Terarah</small></span>
+      </a>
+
+      <nav class="tb-nav" id="tbNav">
+        <a href="#/beranda" data-nav="beranda">Beranda</a>
+        <a href="#/pengumuman" data-nav="pengumuman">Pengumuman</a>
+        <a href="#/beranda" data-scroll="jenjang">4 Jenjang</a>
+        <a href="#/beranda" data-scroll="fitur">Fitur</a>
+      </nav>
+
+      <div class="tb-act">
+        <button class="icon-btn" id="btnNotif" aria-label="Pusat pemberitahuan" title="Pemberitahuan (soal, dokumen, nilai)" style="display:none">
+          <svg class="i">
+            <use href="#i-bell"></use>
+          </svg>
+          <span class="notif-badge" id="notifJml" hidden>0</span>
+        </button>
+        <button class="icon-btn" id="btnTheme" aria-label="Ganti tema terang/night" title="Tema terang / night">
+          <svg class="i" id="themeIcon">
+            <use href="#i-moon"></use>
+          </svg>
+        </button>
+        <div id="userChip"></div>
+        <button class="btn btn-ghost hide-sm" id="btnMasuk">Masuk</button>
+        <button class="btn btn-primary hide-sm" id="btnDaftar">Daftar Gratis</button>
+        <button class="icon-btn" id="btnMenu" aria-label="Buka menu" aria-expanded="false">
+          <svg class="i">
+            <use href="#i-menu"></use>
+          </svg>
+        </button>
+        <div id="notifPanel" class="notif-panel" hidden></div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ============ MENU MOBILE ============ -->
+  <div id="mobileMenu">
+    <div class="mm-links">
+      <a href="#/beranda" data-nav="beranda"><svg class="i">
+          <use href="#i-school"></use>
+        </svg> Beranda</a>
+      <a href="#/pengumuman" data-nav="pengumuman"><svg class="i">
+          <use href="#i-bell"></use>
+        </svg> Papan Pengumuman</a>
+      <a href="#/beranda" data-scroll="jenjang"><svg class="i">
+          <use href="#i-cap"></use>
+        </svg> Empat Pilar Jenjang</a>
+      <a href="#/beranda" data-scroll="fitur"><svg class="i">
+          <use href="#i-bolt"></use>
+        </svg> Fitur Unggulan</a>
+      <a href="#/pilih" data-auth="1"><svg class="i">
+          <use href="#i-compass"></use>
+        </svg> Ruang Jenjang Saya</a>
+      <a href="#/perpustakaan"><svg class="i">
+          <use href="#i-books"></use>
+        </svg> Perpustakaan Digital</a>
+      <a href="#/kurikulum"><svg class="i">
+          <use href="#i-scroll"></use>
+        </svg> Sistem Kurikulum</a>
+      <a href="#/industri"><svg class="i">
+          <use href="#i-building"></use>
+        </svg> Koneksi Dunia Industri</a>
+    </div>
+    <div class="mm-act" id="mmAct">
+      <button class="btn btn-ghost" id="btnMasuk2">Masuk</button>
+      <button class="btn btn-primary" id="btnDaftar2">Daftar Gratis</button>
+    </div>
+  </div>
+
+  <!-- ============ KONTEN ============ -->
+  <!-- Isi awal = layar siap. Diganti router begitu app.js selesai memuat,
+       supaya area konten tidak pernah kosong saat refresh. -->
+  <main id="view">
+    <div class="boot">
+      <span class="boot-mark"><svg class="logo-i">
+          <use href="#logo-kuradapt"></use>
+        </svg></span>
+      <span class="boot-txt">Menyiapkan Kuradapt…</span>
+    </div>
+  </main>
+
+  <!-- ============ MODAL & TOAST ============ -->
+  <div id="modal" role="dialog" aria-modal="true">
+    <div class="modal-box" id="modalBox"></div>
+  </div>
+  <div id="toastBox" aria-live="polite"></div>
+
+  <script src="config.js"></script>
+  <script src="data-sd.js"></script>
+  <script src="data-smp.js"></script>
+  <script src="data-sma.js"></script>
+  <script src="data-smk.js"></script>
+  <script src="data-kuliah.js"></script>
+  <script src="data-wilayah.js"></script>
+  <script src="app.js"></script>
+</body>
+
+</html>

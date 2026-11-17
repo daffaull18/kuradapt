@@ -1,0 +1,97 @@
+/* ============================================================
+   KURADAPT — DATA WILAYAH & LEMBAGA (referensi offline)
+   Sumber resmi menyusul di tahap backend: Dapodik (satuan
+   pendidikan), PDDikti (perguruan tinggi), pendataan mitra
+   industri. Data di bawah dipakai untuk alur pendaftaran
+   berjenjang: provinsi → kabupaten/kota → kecamatan → lembaga.
+   ============================================================ */
+(function () {
+  window.WILAYAH = {
+    "Aceh": ["Kota Banda Aceh", "Kab. Aceh Besar", "Kab. Pidie", "Kab. Aceh Utara", "Kota Lhokseumawe"],
+    "Sumatera Utara": ["Kota Medan", "Kab. Deli Serdang", "Kab. Karo", "Kota Binjai", "Kab. Langkat"],
+    "Sumatera Barat": ["Kota Padang", "Kab. Agam", "Kab. Bukittinggi", "Kota Payakumbuh", "Kab. Tanah Datar"],
+    "Riau": ["Kota Pekanbaru", "Kab. Kampar", "Kab. Siak", "Kab. Bengkalis", "Kab. Rokan Hulu"],
+    "Kepulauan Riau": ["Kota Batam", "Kota Tanjung Pinang", "Kab. Karimun", "Kab. Bintan"],
+    "Jambi": ["Kota Jambi", "Kab. Muaro Jambi", "Kab. Kerinci", "Kab. Batanghari"],
+    "Sumatera Selatan": ["Kota Palembang", "Kab. Ogan Komering Ilir", "Kab. Muara Enim", "Kota Lubuk Linggau", "Kab. Banyuasin"],
+    "Bengkulu": ["Kota Bengkulu", "Kab. Rejang Lebong", "Kab. Bengkulu Utara", "Kab. Seluma"],
+    "Lampung": ["Kota Bandar Lampung", "Kota Metro", "Kab. Lampung Selatan", "Kab. Lampung Tengah", "Kab. Tulang Bawang"],
+    "Bangka Belitung": ["Kota Pangkal Pinang", "Kab. Bangka", "Kab. Belitung", "Kab. Bangka Selatan"],
+    "Kalimantan Barat": ["Kota Pontianak", "Kab. Kubu Raya", "Kab. Landak", "Kab. Sambas", "Kab. Ketapang"],
+    "Kalimantan Tengah": ["Kota Palangka Raya", "Kab. Kapuas", "Kab. Kotawaringin Barat", "Kab. Kotawaringin Timur"],
+    "Kalimantan Selatan": ["Kota Banjarmasin", "Kota Banjarbaru", "Kab. Banjar", "Kab. Kotabaru", "Kab. Tanah Laut"],
+    "Kalimantan Timur": ["Kota Balikpapan", "Kota Samarinda", "Kota Bontang", "Kab. Kutai Kartanegara", "Kab. Kutai Barat"],
+    "Kalimantan Utara": ["Kota Tarakan", "Kab. Bulungan", "Kab. Nunukan", "Kab. Malinau"],
+    "Sulawesi Utara": ["Kota Manado", "Kota Bitung", "Kab. Minahasa", "Kab. Kepulauan Sangihe"],
+    "Sulawesi Tengah": ["Kota Palu", "Kab. Donggala", "Kab. Poso", "Kab. Sigi"],
+    "Sulawesi Selatan": ["Kota Makassar", "Kab. Gowa", "Kab. Takalar", "Kota Parepare", "Kab. Bone"],
+    "Sulawesi Tenggara": ["Kota Kendari", "Kota Baubau", "Kab. Konawe", "Kab. Kolaka"],
+    "Gorontalo": ["Kota Gorontalo", "Kab. Gorontalo Utara", "Kab. Bone Bolango", "Kab. Pohuwato"],
+    "Sulawesi Barat": ["Kota Mamuju", "Kab. Majene", "Kab. Polewali Mandar", "Kab. Mamuju Tengah"],
+    "Bali": ["Kota Denpasar", "Kab. Badung", "Kab. Gianyar", "Kab. Tabanan", "Kab. Klungkung"],
+    "Nusa Tenggara Barat": ["Kota Mataram", "Kab. Lombok Barat", "Kab. Lombok Tengah", "Kab. Sumbawa", "Kab. Bima"],
+    "Nusa Tenggara Timur": ["Kota Kupang", "Kab. Sikka", "Kab. Ende", "Kab. Flores Timur", "Kab. Sumba Barat"],
+    "Maluku": ["Kota Ambon", "Kab. Seram Bagian Timur", "Kab. Maluku Tengah", "Kab. Kepulauan Aru"],
+    "Maluku Utara": ["Kota Ternate", "Kota Tidore Kepulauan", "Kab. Halmahera Barat", "Kab. Halmahera Utara"],
+    "Papua": ["Kota Jayapura", "Kab. Jayapura", "Kab. Keerom", "Kab. Sarmi"],
+    "Papua Barat": ["Kota Sorong", "Kab. Sorong", "Kab. Raja Ampat", "Kab. Tambrauw"],
+    "Papua Selatan": ["Kab. Merauke", "Kab. Boven Digoel", "Kab. Mappi", "Kab. Asmat"],
+    "Papua Tengah": ["Kab. Nabire", "Kab. Paniai", "Kab. Mimika", "Kab. Dogiyai"],
+    "Papua Pegunungan": ["Kab. Jayawijaya", "Kab. Lanny Jaya", "Kab. Mamberamo Tengah", "Kab. Yalimo"],
+    "Papua Barat Daya": ["Kab. Maybrat", "Kab. Tambrauw", "Kab. Kaimana", "Kab. Fakfak"],
+    "Jakarta": ["Jakarta Pusat", "Jakarta Selatan", "Jakarta Barat", "Jakarta Timur", "Jakarta Utara", "Kepulauan Seribu"],
+    "Yogyakarta": ["Kota Yogyakarta", "Kab. Sleman", "Kab. Bantul", "Kab. Gunungkidul", "Kab. Kulon Progo"],
+    "Banten": ["Kota Serang", "Kota Tangerang", "Kota Cilegon", "Kab. Tangerang", "Kab. Lebak", "Kab. Pandeglang"],
+    "Jawa Barat": ["Kota Bandung", "Kota Bogor", "Kota Cimahi", "Kota Depok", "Kota Bekasi", "Kab. Bandung", "Kab. Bogor", "Kab. Subang", "Kab. Garut", "Kab. Cirebon"],
+    "Jawa Tengah": ["Kota Semarang", "Kota Surakarta", "Kota Salatiga", "Kab. Semarang", "Kab. Solo", "Kab. Klaten", "Kab. Purworejo", "Kab. Tegal", "Kab. Pekalongan", "Kab. Magelang"],
+    "Jawa Timur": ["Kota Surabaya", "Kota Malang", "Kota Kediri", "Kota Blitar", "Kota Madiun", "Kab. Sidoarjo", "Kab. Gresik", "Kab. Malang", "Kab. Jember", "Kab. Bondowoso"]
+  };
+
+  /* Data lembaga contoh (offline). Struktur meniru rujukan Dapodik/PDDikti:
+     id = ID lembaga unik (basis pencocokan, bukan nama), tipe = sd/smp/sma/smk/pt. */
+  window.LEMBAGA = [
+    { id: "NPSN-20101001", nama: "SDN Menteng 01", tipe: "sd", provinsi: "Jakarta", kota: "Jakarta Pusat" },
+    { id: "NPSN-20101002", nama: "SDN Cikini 03", tipe: "sd", provinsi: "Jakarta", kota: "Jakarta Pusat" },
+    { id: "NPSN-20102001", nama: "SDN Kebayoran Baru 05", tipe: "sd", provinsi: "Jakarta", kota: "Jakarta Selatan" },
+    { id: "NPSN-20104001", nama: "SDN Tanjung Priok 02", tipe: "sd", provinsi: "Jakarta", kota: "Jakarta Utara" },
+    { id: "NPSN-20111001", nama: "SMPN 1 Depok", tipe: "smp", provinsi: "Jawa Barat", kota: "Bogor" },
+    { id: "NPSN-20111002", nama: "SMPN 5 Bogor", tipe: "smp", provinsi: "Jawa Barat", kota: "Bogor" },
+    { id: "NPSN-20112001", nama: "SMPN 1 Bandung", tipe: "smp", provinsi: "Jawa Barat", kota: "Bandung" },
+    { id: "NPSN-20112002", nama: "SMPN 21 Bandung", tipe: "smp", provinsi: "Jawa Barat", kota: "Bandung" },
+    { id: "NPSN-20113001", nama: "SMPN 1 Cimahi", tipe: "smp", provinsi: "Jawa Barat", kota: "Cimahi" },
+    { id: "NPSN-20114001", nama: "SMPN 1 Depok Sleman", tipe: "smp", provinsi: "Yogyakarta", kota: "Sleman" },
+    { id: "NPSN-20115001", nama: "SMPN 1 Yogyakarta", tipe: "smp", provinsi: "Yogyakarta", kota: "Kota Yogyakarta" },
+    { id: "NPSN-20121001", nama: "SMAN 1 Jakarta", tipe: "sma", provinsi: "Jakarta", kota: "Jakarta Pusat" },
+    { id: "NPSN-20121002", nama: "SMAN 3 Jakarta", tipe: "sma", provinsi: "Jakarta", kota: "Jakarta Pusat" },
+    { id: "NPSN-20122001", nama: "SMAN 1 Bandung", tipe: "sma", provinsi: "Jawa Barat", kota: "Bandung" },
+    { id: "NPSN-20122002", nama: "SMAN 3 Bandung", tipe: "sma", provinsi: "Jawa Barat", kota: "Bandung" },
+    { id: "NPSN-20123001", nama: "SMAN 1 Bogor", tipe: "sma", provinsi: "Jawa Barat", kota: "Bogor" },
+    { id: "NPSN-20124001", nama: "SMAN 1 Semarang", tipe: "sma", provinsi: "Jawa Tengah", kota: "Semarang" },
+    { id: "NPSN-20124002", nama: "SMAN 3 Semarang", tipe: "sma", provinsi: "Jawa Tengah", kota: "Semarang" },
+    { id: "NPSN-20125001", nama: "SMAN 1 Surabaya", tipe: "sma", provinsi: "Jawa Timur", kota: "Surabaya" },
+    { id: "NPSN-20125002", nama: "SMAN 5 Surabaya", tipe: "sma", provinsi: "Jawa Timur", kota: "Surabaya" },
+    { id: "NPSN-20125003", nama: "SMAN 3 Malang", tipe: "sma", provinsi: "Jawa Timur", kota: "Malang" },
+    { id: "NPSN-20126001", nama: "SMAN 1 Yogyakarta", tipe: "sma", provinsi: "Yogyakarta", kota: "Kota Yogyakarta" },
+    { id: "NPSN-20127001", nama: "SMAN 1 Denpasar", tipe: "sma", provinsi: "Bali", kota: "Kota Denpasar" },
+    { id: "NPSN-20128001", nama: "SMAN 1 Medan", tipe: "sma", provinsi: "Sumatera Utara", kota: "Kota Medan" },
+    { id: "NPSN-20131001", nama: "SMKN 1 Jakarta", tipe: "smk", provinsi: "Jakarta", kota: "Jakarta Pusat" },
+    { id: "NPSN-20132001", nama: "SMKN 3 Bandung", tipe: "smk", provinsi: "Jawa Barat", kota: "Bandung" },
+    { id: "NPSN-20132002", nama: "SMKN 5 Bandung", tipe: "smk", provinsi: "Jawa Barat", kota: "Bandung" },
+    { id: "NPSN-20134001", nama: "SMKN 1 Semarang", tipe: "smk", provinsi: "Jawa Tengah", kota: "Semarang" },
+    { id: "NPSN-20135001", nama: "SMKN 1 Surabaya", tipe: "smk", provinsi: "Jawa Timur", kota: "Surabaya" },
+    { id: "NPSN-20135002", nama: "SMKN 2 Surabaya", tipe: "smk", provinsi: "Jawa Timur", kota: "Surabaya" },
+    { id: "NPSN-20136001", nama: "SMKN 1 Yogyakarta", tipe: "smk", provinsi: "Yogyakarta", kota: "Kota Yogyakarta" },
+    { id: "PT-20210001", nama: "Universitas Gadjah Mada", tipe: "pt", provinsi: "Yogyakarta", kota: "Sleman" },
+    { id: "PT-20210002", nama: "Universitas Indonesia", tipe: "pt", provinsi: "Jakarta", kota: "Jakarta Selatan" },
+    { id: "PT-20210003", nama: "Institut Teknologi Bandung", tipe: "pt", provinsi: "Jawa Barat", kota: "Bandung" },
+    { id: "PT-20210004", nama: "Universitas Airlangga", tipe: "pt", provinsi: "Jawa Timur", kota: "Surabaya" },
+    { id: "PT-20210005", nama: "Universitas Diponegoro", tipe: "pt", provinsi: "Jawa Tengah", kota: "Semarang" },
+    { id: "PT-20210006", nama: "Universitas Brawijaya", tipe: "pt", provinsi: "Jawa Timur", kota: "Malang" },
+    { id: "PT-20210007", nama: "Institut Pertanian Bogor", tipe: "pt", provinsi: "Jawa Barat", kota: "Bogor" },
+    { id: "PT-20210008", nama: "Universitas Padjadjaran", tipe: "pt", provinsi: "Jawa Barat", kota: "Bandung" },
+    { id: "PT-20210009", nama: "Universitas Hasanuddin", tipe: "pt", provinsi: "Sulawesi Selatan", kota: "Kota Makassar" },
+    { id: "PT-20210010", nama: "Universitas Andalas", tipe: "pt", provinsi: "Sumatera Barat", kota: "Kota Padang" },
+    { id: "PT-20210011", nama: "Universitas Udayana", tipe: "pt", provinsi: "Bali", kota: "Kota Denpasar" },
+    { id: "PT-20210012", nama: "Universitas Bina Nusantara", tipe: "pt", provinsi: "Jakarta", kota: "Jakarta Barat" }
+  ];
+})();

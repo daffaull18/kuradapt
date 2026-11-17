@@ -1,0 +1,3 @@
+# Kuradapt — SPA fallback (Netlify / static host)
+# Semua rute diarahkan ke index.html agar hash routing (#/guru, #/siswa) tetap bisa dibuka langsung
+/*    /index.html   200
