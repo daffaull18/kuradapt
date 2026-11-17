@@ -1217,14 +1217,14 @@ setTimeout(async () => {
   ok("klik penulis → modal profil penulis", $("#modalBox").textContent.includes("Pak Notif") && !!$("#modalBox .nama-profil"));
   click($("[data-tutup]"));
 
-  /* ---- i. kontrak berkas rilis v3.4.0 ---- */
+  /* ---- i. kontrak berkas rilis v3.4.1 ---- */
   ok('boot-route mengenali rute "profil"', bootRoute.indexOf('"profil"') > -1);
   const csp37 = (html.match(/Content-Security-Policy"\s+content="([^"]+)"/) || [])[1] || "";
   ok("CSP connect-src mengizinkan script.google.com", /connect-src[^;]*script\.google\.com/.test(csp37));
   const hdr37 = fs.existsSync(DIR + "\\_headers") ? fs.readFileSync(DIR + "\\_headers", "utf8") : "";
   ok("_headers ikut mengizinkan script.google.com", /script\.google\.com/.test(hdr37));
   ok("config.js menyediakan kunci NOTIF_WEBHOOK", fs.readFileSync(DIR + "\\config.js", "utf8").indexOf("NOTIF_WEBHOOK") > -1);
-  ok("service worker memakai cache rilis v3.4.0", fs.readFileSync(DIR + "\\sw.js", "utf8").indexOf("kuradapt-v3.4.0") > -1);
+  ok("service worker memakai cache rilis v3.4.1", fs.readFileSync(DIR + "\\sw.js", "utf8").indexOf("kuradapt-v3.4.1") > -1);
   ok("styles.css memuat gaya panel & profil", /notif-panel/.test(css) && /profil-page/.test(css));
 
   /* ---- j. halaman #/admin: daftar pengguna, tombol profil & hapus ---- */

@@ -113,7 +113,7 @@ Pilih salah satu:
 cd "C:\Users\user\OneDrive\Desktop\project Dinzz\kuradapt"
 git init
 git add .
-git commit -m "Kuradapt v3.4.0 — release"
+git commit -m "Kuradapt v3.4.1 — release"
 git branch -M main
 git remote add origin https://github.com/USERNAME-ANDA/kuradapt.git
 git push -u origin main
