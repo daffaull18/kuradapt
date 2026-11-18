@@ -27,19 +27,25 @@ Total waktu: **~15–20 menit** | Biaya: **Gratis**
 
 ## Langkah 3: Ambil Kunci API (URL + Anon Key)
 
+> ✅ **SUDAH DIISI** untuk project ini — `config.js` sudah berisi Project URL
+> `https://qprrdwvwcpivfjgxqkdt.supabase.co` dan publishable key Supabase.
+> Langkah ini hanya perlu diulang bila membuat project Supabase baru.
+
 1. Di dashboard Supabase, klik menu kiri **Settings** → **API**.
 2. Salin dua nilai ini:
    - **Project URL** → contoh: `https://abcdefghijklmnop.supabase.co`
-   - **anon public key** → contoh: `eyJhbGciOiJIUzI1NiIsInR5cCI6...`
+   - **anon public key / publishable key** → contoh: `sb_publishable_BG6M7p...`
 
 ## Langkah 4: Isi config.js
+
+> ✅ **SUDAH DIISI** — tidak perlu diubah lagi kecuali ganti project Supabase.
 
 Buka file `config.js` di folder project (editor teks apa saja, mis. Notepad):
 
 ```js
 window.KURADAPT_CONFIG = {
   SUPABASE_URL: "https://xxxx.supabase.co",      // ← tempel Project URL di sini
-  SUPABASE_ANON_KEY: "eyJhbGciOi...",            // ← tempel anon public key di sini
+  SUPABASE_ANON_KEY: "sb_publishable_...",       // ← tempel publishable/anon key di sini
   NOTIF_WEBHOOK: ""                              // ← URL Web App Apps Script (opsional, lihat Langkah 4b)
 };
 ```
@@ -89,15 +95,34 @@ Agar pemberitahuan **ikut terkirim sebagai email ke akun Google pengguna**, akti
   dan sebagai notifikasi sistem browser.
 - Izin notifikasi **browser** diminta lewat tombol *"Aktifkan notifikasi browser"* di panel lonceng.
 
-## Langkah 5: (Opsional) Matikan Verifikasi Email
+## Langkah 5: Pengaturan Wajib Supabase (URL Situs + Konfirmasi Email)
 
-Supabase secara default mengirim email konfirmasi saat pendaftaran. Untuk pengujian cepat, matikan dulu:
+Dua pengaturan ini menentukan apakah **pendaftaran lintas perangkat** dan
+**link "Lupa Kata Sandi"** bisa jalan:
 
-1. Di dashboard Supabase: **Authentication** → **Settings**.
-2. Di bagian **"Enable email confirmations"** → matikan (toggle off).
-3. Klik **Save**.
+### 5a. URL Situs (wajib — supaya link email kembali ke aplikasi)
 
-*Untuk production disarankan menyalakan kembali agar akun terverifikasi.*
+1. Dashboard Supabase → **Authentication** → **URL Configuration**.
+2. **Site URL**: isi `https://daffaull18.github.io/kuradapt/`
+3. **Redirect URLs**: klik **Add URL** → isi `https://daffaull18.github.io/kuradapt/`
+   (bila nanti pindah ke `https://kuradapt.pages.dev/`, tambahkan juga).
+4. **Save**.
+
+> Tanpa ini, link konfirmasi & link **Lupa Kata Sandi** akan mengarah ke halaman
+> kosong Supabase, bukan ke aplikasi Kuradapt.
+
+### 5b. Konfirmasi Email (disarankan: MATIKAN)
+
+Supabase secara default mengirim email konfirmasi saat pendaftaran. Bila **menyala**,
+akun baru belum bisa dipakai login di perangkat lain sampai dikonfirmasi lewat email.
+
+1. Dashboard Supabase → **Authentication** → **Sign In / Providers** → **Email**.
+2. Matikan **Confirm email** → **Save**.
+
+*Bila dibiarkan menyala*: aplikasi tetap jalan penuh di perangkat pertama (mode lokal),
+dan pengguna diingatkan lewat toast *"Cek Gmail untuk konfirmasi pendaftaran"* — setelah
+dikonfirmasi, login lintas perangkat baru bisa dipakai. Untuk production dengan
+pengguna awam, **matikan** agar tidak ada yang bingung.
 
 ## Langkah 6: Publish ke Hosting Gratis
 
@@ -113,7 +138,7 @@ Pilih salah satu:
 cd "C:\Users\user\OneDrive\Desktop\project Dinzz\kuradapt"
 git init
 git add .
-git commit -m "Kuradapt v3.4.1 — release"
+git commit -m "Kuradapt v3.5.0 — online Supabase + lupa sandi"
 git branch -M main
 git remote add origin https://github.com/USERNAME-ANDA/kuradapt.git
 git push -u origin main
@@ -154,6 +179,24 @@ git push -u origin main
 3. Login dengan akun baru.
 4. Buka dari **perangkat lain** (HP / laptop lain) dengan email yang sama → data & progres akan sama.
 
+## Langkah 8: Coba Fitur Lupa / Atur Ulang Kata Sandi
+
+1. Buka halaman **Masuk** → klik tautan kecil **"Lupa kata sandi?"** (di bawah kolom sandi).
+2. Masukkan email terdaftar → klik **Kirim Permintaan Reset**.
+3. Buka **Gmail** pengguna tersebut (cek folder **Spam/Promosi** bila tidak ada) →
+   ada email berjudul **"Kuradapt · Atur Ulang Kata Sandi"**.
+4. Buka tautan di email → aplikasi menampilkan form **Kata Sandi Baru** → simpan.
+5. Masuk kembali dengan sandi baru.
+
+**Dua jalur sesuai mode:**
+
+| | Mode Online (Supabase terisi) | Mode Lokal (config kosong) |
+|---|---|---|
+| Pengirim email | Supabase Auth (`/auth/v1/recover`) | Jembatan email Google (`NOTIF_WEBHOOK`) |
+| Isi email | Tautan atur ulang sandi | Kode verifikasi 6 digit (berlaku 10 menit) |
+| Syarat | Langkah 5a & 5b sudah dijalankan | `NOTIF_WEBHOOK` harus diisi (Langkah 4b) |
+| Tanpa pengirim | — | Muncul pesan: hubungi Admin Sistem |
+
 ---
 
 ## 🔒 Keamanan yang Sudah Terpasang
@@ -176,13 +219,18 @@ git push -u origin main
 
 | File | Status | Keterangan |
 |------|--------|------------|
-| `config.js` | Diisi oleh Anda | Kunci Supabase (kosong = mode lokal) |
+| `config.js` | Diisi | Kunci Supabase project `kuradapt` (kosong = mode lokal) |
+| `app.js` | Diupdate | v3.5.0: lapisan online Supabase (sinkron) + halaman `#/lupa` |
+| `styles.css` | Diupdate | Navbar menyatu dengan halaman + gaya halaman lupa sandi |
+| `boot-route.js` | Diupdate | Rute `lupa` dikenali anti-kedip |
+| `sw.js` | Diupdate | Cache rilis `kuradapt-v3.5.0` |
+| `test.js` | Diupdate | Mode online dimatikan saat pengujian (680 tes tetap lulus) |
 | `_redirects` | Baru | Fallback SPA untuk static host |
 | `_headers` | Baru | Header keamanan: HSTS, nosniff, anti-frame, CSP (Cloudflare Pages & Netlify) |
 | `netlify.toml` | Baru | Konfigurasi Netlify |
+| `supabase-schema.sql` | Baru | Skema database (jalankan di SQL Editor Supabase) |
 | `DEPLOY.md` | Baru | Panduan ini |
-| `README.md` | Diupdate | Ditambahi panduan deploy |
-| `index.html` | Diperbaiki | Bug signup Supabase ditambal, sinkron otomatis ditambahkan |
+| `README.md` | Diupdate | Ditambahi panduan deploy + changelog |
 
 ---
 
@@ -211,6 +259,18 @@ git push -u origin main
 **Data tidak sinkron antar perangkat?**
 - Pastikan Anda login dengan email yang sama di kedua perangkat.
 - Pastikan `config.js` diisi dengan benar dan file sudah di-publish ulang ke hosting.
+- Pastikan skema `supabase-schema.sql` sudah dijalankan (buka `…/rest/v1/user_data`
+  di browser — bila muncul `404 PGRST205`, skema belum jalan).
+- Konfirmasi email Supabase (Langkah 5b) menentukan apakah akun baru bisa login
+  di perangkat kedua.
+
+**Email "Lupa Kata Sandi" tidak masuk Gmail?**
+- Cek folder **Spam** dan **Promosi**.
+- Pastikan **Site URL & Redirect URL** sudah diisi (Langkah 5a) — kalau tidak,
+  email tetap terkirim tapi tautannya mengarah ke halaman kosong Supabase.
+- Mode online: lihat menu **Authentication → Logs → Auth** di dashboard Supabase
+  untuk memastikan permintaan `recover` diterima.
+- Mode lokal: `NOTIF_WEBHOOK` harus diisi (Langkah 4b); cek tab *Executions* Apps Script.
 
 ---
 

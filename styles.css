@@ -276,12 +276,13 @@ body[data-route="pengumuman"] .ann-card p { margin-bottom: 8px; }
 }
 .sec-head p { color: var(--muted); font-size: 1.02rem; }
 
-/* ---------- topbar ---------- */
+/* ---------- topbar ----------
+   Latar navbar = latar halaman (var(--bg)), TANPA border & tanpa efek kaca:
+   navbar harus terlihat sebagai bagian dari halaman, bukan kartu terpisah
+   yang mengambang (menyerupai notifikasi push — saran Abang, 18/11/2026). */
 #topbar {
   position: sticky; top: 0; z-index: 60; height: var(--top-h);
-  background: color-mix(in srgb, var(--surface) 82%, transparent);
-  backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
-  border-bottom: 1px solid var(--line);
+  background: var(--bg);
 }
 .tb-in { height: 100%; display: flex; align-items: center; gap: 18px; }
 .brand { display: flex; align-items: center; gap: 10px; min-width: 0; color: inherit; }
@@ -301,7 +302,8 @@ body[data-route="pengumuman"] .ann-card p { margin-bottom: 8px; }
    sekali — di halaman pengumuman maupun halaman lain (login, daftar, pilih,
    ruang, admin). Halaman jadi bersih: hanya logo, tema, Masuk/Daftar. */
 body[data-route] .tb-nav { display: none; }
-body[data-route="masuk"] #btnMasuk, body[data-route="daftar"] #btnDaftar { display: none; }
+body[data-route="masuk"] #btnMasuk, body[data-route="daftar"] #btnDaftar,
+body[data-route="lupa"] #btnMasuk, body[data-route="lupa"] #btnDaftar { display: none; }
 .tb-act { display: flex; align-items: center; gap: 9px; }
 .tb-act .btn { padding: .6em 1.25em; font-size: .86rem; }
 
@@ -519,6 +521,19 @@ main { position: relative; z-index: 1; min-height: calc(100vh - var(--top-h)); }
 .auth-form .af-head h1 { font-size: clamp(1.5rem, 3vw, 2rem); }
 .auth-form .af-head p { color: var(--muted); font-size: .92rem; }
 .auth-alt { text-align: center; font-size: .88rem; color: var(--muted); margin-top: 18px; }
+/* "Lupa kata sandi?" — tautan kecil di bawah kolom sandi (halaman masuk) */
+.auth-alt.forgot { text-align: right; margin-top: -4px; font-size: .84rem; }
+.auth-alt.forgot a { color: var(--brand); font-weight: 600; }
+.auth-alt.forgot a:hover { text-decoration: underline; }
+/* Kotak konfirmasi halaman lupa sandi */
+.lupa-ok {
+  display: grid; gap: 6px; justify-items: start; padding: 16px 18px; margin-bottom: 16px;
+  background: color-mix(in srgb, var(--green) 10%, var(--surface));
+  border: 1px solid color-mix(in srgb, var(--green) 35%, transparent); border-radius: var(--r);
+}
+.lupa-ok .i { width: 26px; height: 26px; color: var(--green); }
+.lupa-ok b { font-family: var(--font-display); font-size: 1rem; color: var(--text); }
+.lupa-ok p { margin: 0; font-size: .86rem; color: var(--muted); }
 
 /* --- B. DAFTAR: wizard tengah di atas latar berbeda --- */
 .reg-page {

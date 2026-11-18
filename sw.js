@@ -1,5 +1,5 @@
 /* Kuradapt Service Worker — cache aplikasi agar tetap jalan offline */
-const CACHE = "kuradapt-v3.4.1";
+const CACHE = "kuradapt-v3.5.0";
 const SHELL = [
   "./",
   "./index.html",

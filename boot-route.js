@@ -4,7 +4,7 @@
    File eksternal (bukan inline) agar CSP bisa tanpa 'unsafe-inline'. */
 (function () {
   var h = String(location.hash || "").replace(/^#\/?/, "").split("/")[0];
-  var dikenal = ["beranda", "pengumuman", "masuk", "daftar", "pilih", "r", "admin", "profil", "materi"];
+  var dikenal = ["beranda", "pengumuman", "masuk", "daftar", "lupa", "pilih", "r", "admin", "profil", "materi"];
   /* hash kosong / rute tak dikenal → halaman login (sesuai alur baru) */
   document.body.setAttribute("data-route", dikenal.indexOf(h) > -1 ? h : "masuk");
 })();

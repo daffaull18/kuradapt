@@ -13,8 +13,8 @@
       (guru/siswa/industri) dan data tersinkron antar perangkat.
    ===================================================== */
 window.KURADAPT_CONFIG = {
-  SUPABASE_URL: "",        // contoh: "https://abcdefghijklmnop.supabase.co"
-  SUPABASE_ANON_KEY: "",   // contoh: "eyJhbGciOiJIUzI1NiIsInR5cCI6..."
+  SUPABASE_URL: "https://qprrdwvwcpivfjgxqkdt.supabase.co", // Project URL (Settings → API)
+  SUPABASE_ANON_KEY: "sb_publishable_BG6M7p4sUYFWA2axGz3s-Q_eXh159Lr", // Publishable key (Settings → API)
   /* ---- JEMBATAN EMAIL GOOGLE (notifikasi, opsional) -----------------
      Kosongkan = notifikasi jalan in-app + browser saja.
      Isi dengan URL "Web App" Google Apps Script (akun Google Anda)

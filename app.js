@@ -31,11 +31,317 @@
     notif: "kuradapt_notif"        /* pusat pemberitahuan (soal, dokumen, nilai, dll.) */
   };
 
+  /* ============================================================
+     LAPISAN ONLINE (Supabase) — OPSIONAL
+     ------------------------------------------------------------
+     Aktif hanya bila config.js mengisi SUPABASE_URL + SUPABASE_ANON_KEY.
+     Kosong (bawaan) → SB.aktif = false: TIDAK ADA satu pun panggilan
+     jaringan, aplikasi berjalan 100% seperti mode lokal sebelumnya.
+
+     Prinsip: jalur lokal SELALU lebih dulu (sinkron, tanpa jaringan);
+     online hanya lapisan asinkron di belakangnya — daftar/masuk ke
+     Supabase Auth, lalu snapshot localStorage diunggah/diturunkan ke
+     tabel user_data (RLS: hanya baris milik sendiri yang terbaca).
+     ============================================================ */
+  const SB = { aktif: false, url: "", key: "", akses: "", refresh: "", uid: "", email: "" };
+  const K_ONLINE = "kuradapt_online";  /* token sesi Supabase — milik perangkat, TIDAK disinkron */
+  const K_SYNCW = "kuradapt_syncw";    /* penanda "pernah tersinkron" — TIDAK disinkron */
+  const SINKRON_KEYS = [K.users, K.tema, K.pengumuman, K.nilai, K.progres, K.dok,
+    K.kegiatan, K.undangan, K.soal, K.mapelx, K.jadwal, K.kurikulum, K.buku,
+    K.industri, K.log, K.gagal, K.mfa, K.v2, K.notif];
+  /* K.sesi & K.kunci sengaja tidak disinkron: sesi & kunci HMAC adalah milik tiap perangkat */
+  let _snTimer = null, _snDalam = false, _snSibuk = false, _snLokal = false, _snServer = "";
+
+  function sbCfg(n) {
+    try { return String((window.KURADAPT_CONFIG || {})[n] || ""); } catch (e) { return ""; }
+  }
+  function sbPutus() { /* lepas sesi online (keluar akun / sesi lokal berakhir) */
+    SB.akses = ""; SB.refresh = ""; SB.uid = ""; SB.email = "";
+    try { if (localStorage.getItem(K_ONLINE) != null) localStorage.removeItem(K_ONLINE); } catch (e) { }
+    if (_snTimer) { clearTimeout(_snTimer); _snTimer = null; }
+  }
+  function sbSimpanToken(t) {
+    try { localStorage.setItem(K_ONLINE, JSON.stringify(t || null)); } catch (e) { }
+  }
+  function sbBacaToken() {
+    let t = null;
+    try { t = JSON.parse(localStorage.getItem(K_ONLINE) || "null"); } catch (e) { t = null; }
+    SB.akses = (t && t.akses) || ""; SB.refresh = (t && t.refresh) || "";
+    SB.uid = (t && t.uid) || ""; SB.email = (t && t.email) || "";
+  }
+  function sbInit() {
+    SB.url = sbCfg("SUPABASE_URL").replace(/\/+$/, "");
+    SB.key = sbCfg("SUPABASE_ANON_KEY");
+    SB.aktif = /^https:\/\/[a-z0-9-]+\.supabase\.co$/i.test(SB.url) &&
+      SB.key.length > 20 && typeof fetch === "function";
+    if (!SB.aktif) { SB.url = ""; SB.key = ""; sbPutus(); return; }
+    sbBacaToken();
+    let w = ""; try { w = localStorage.getItem(K_SYNCW) || ""; } catch (e) { }
+    _snServer = w;
+    _snLokal = !w; /* belum pernah tersinkron → nanti digabung, bukan ditimpa */
+  }
+  function snCatat(w) { _snServer = w || ""; try { localStorage.setItem(K_SYNCW, _snServer); } catch (e) { } }
+
+  /* ---- HTTP generik (auto-refresh bila token 401) ---- */
+  function sbHttp(path, opt, ulang) {
+    if (!SB.aktif) return Promise.reject({ sb: true, offline: true });
+    const o = Object.assign({ method: "GET" }, opt || {});
+    o.headers = Object.assign({
+      apikey: SB.key,
+      Authorization: "Bearer " + (SB.akses || SB.key),
+      "Content-Type": "application/json",
+      Prefer: "return=representation"
+    }, o.headers);
+    return fetch(SB.url + path, o).then(r => {
+      if (r.status === 401 && SB.refresh && ulang !== false) {
+        return sbSegar().then(x => x ? sbHttp(path, opt, false) : Promise.reject({ sb: true, status: 401 }));
+      }
+      return r.json().then(
+        j => ({ ok: r.ok, status: r.status, json: j }),
+        () => ({ ok: r.ok, status: r.status, json: null })
+      );
+    });
+  }
+  function sbSegar() { /* perpanjang sesi Supabase memakai refresh_token */
+    if (!SB.aktif || !SB.refresh) return Promise.resolve(false);
+    return fetch(SB.url + "/auth/v1/token?grant_type=refresh_token", {
+      method: "POST",
+      headers: { apikey: SB.key, "Content-Type": "application/json" },
+      body: JSON.stringify({ refresh_token: SB.refresh })
+    }).then(r => r.json().then(j => {
+      if (!r.ok || !j || !j.access_token) return false;
+      sbSimpanToken({
+        akses: j.access_token, refresh: j.refresh_token || SB.refresh,
+        uid: (j.user && j.user.id) || SB.uid, email: (j.user && j.user.email) || SB.email
+      });
+      sbBacaToken();
+      return true;
+    }, () => false)).catch(() => false);
+  }
+  /* ---- panggilan auth (signup / password / recover / update user) ---- */
+  function sbAuth(method, path, body) {
+    if (!SB.aktif) return Promise.resolve({ ok: false, status: 0, json: null, offline: true });
+    const h = { apikey: SB.key, "Content-Type": "application/json" };
+    if (SB.akses) h.Authorization = "Bearer " + SB.akses;
+    return fetch(SB.url + "/auth/v1/" + path, {
+      method: method, headers: h, body: body == null ? undefined : JSON.stringify(body)
+    }).then(r => r.json().then(
+      j => ({ ok: r.ok, status: r.status, json: j }),
+      () => ({ ok: r.ok, status: r.status, json: null })
+    )).catch(() => ({ ok: false, status: 0, json: null }));
+  }
+  function sbSimpanSesiAuth(js) { /* simpan hasil login/signup Supabase */
+    const usr = (js && js.user) || {};
+    sbSimpanToken({
+      akses: js.access_token, refresh: js.refresh_token || "",
+      uid: usr.id || "", email: usr.email || SB.email
+    });
+    sbBacaToken();
+  }
+
+  /* ---- snapshot & penggabungan ---- */
+  function sbIsi() {
+    const out = {};
+    for (let i = 0; i < SINKRON_KEYS.length; i++) {
+      const k = SINKRON_KEYS[i], raw = lsRaw(k);
+      if (raw == null) continue;
+      try { out[k] = JSON.parse(raw); } catch (e) { out[k] = null; }
+    }
+    return out;
+  }
+  function sbGabungArr(a, b) { /* union per kunci identitas — tak pernah membuang data */
+    const out = (Array.isArray(b) ? b : []).slice();
+    const idx = {};
+    const kunci = x => (x && typeof x === "object") ? (x.email || x.id || x.uid || x.q || null) : null;
+    out.forEach((x, i) => { const k = kunci(x); if (k != null) idx[k] = i; });
+    (Array.isArray(a) ? a : []).forEach(x => {
+      const k = kunci(x);
+      if (k == null) { out.push(x); return; }
+      if (!(k in idx)) { idx[k] = out.length; out.push(x); }
+    });
+    return out;
+  }
+  function sbGabung(a, b, d) { /* server (a) digabung ke lokal (b); lokal menang bila konflik */
+    d = d || 0;
+    if (d > 3) return b;
+    if (Array.isArray(a) && Array.isArray(b)) return sbGabungArr(a, b);
+    if (a && b && typeof a === "object" && typeof b === "object") {
+      const out = Object.assign({}, a);
+      Object.keys(b).forEach(k => { out[k] = (k in a) ? sbGabung(a[k], b[k], d + 1) : b[k]; });
+      return out;
+    }
+    return b;
+  }
+  function sbTandaUlang(u) { /* catatan akun ditandai ulang dengan kunci HMAC perangkat ini */
+    const c = Object.assign({}, u); delete c._sig;
+    try { c._sig = tanda(c); } catch (e) { }
+    return c;
+  }
+  function sbGabungUsers(remote, lokal) {
+    const out = [], idx = {};
+    const taruh = (u, ulang) => {
+      if (!u || typeof u !== "object" || !u.email) return;
+      const e = String(u.email).toLowerCase();
+      const c = ulang ? sbTandaUlang(u) : u;
+      if (!(e in idx)) { idx[e] = out.length; out.push(c); return; }
+      if (String(c.tgl || "") > String(out[idx[e]].tgl || "")) out[idx[e]] = c;
+    };
+    (Array.isArray(remote) ? remote : []).forEach(u => taruh(u, true));
+    (Array.isArray(lokal) ? lokal : []).forEach(u => taruh(u, false));
+    return out;
+  }
+  function sbTerapkan(remote) { /* server menang → tulis ke lokal tanpa memicu unggah ulang */
+    _snDalam = true;
+    try {
+      for (let i = 0; i < SINKRON_KEYS.length; i++) {
+        const k = SINKRON_KEYS[i];
+        if (!(k in remote)) continue;
+        lsSet(k, k === K.users ? sbGabungUsers(remote[k], daftarUsers()) : remote[k]);
+      }
+    } finally { _snDalam = false; }
+  }
+  function sbGabungkan(remote) { /* perangkat baru pertama kali nyambung → gabung dua arah */
+    _snDalam = true;
+    try {
+      for (let i = 0; i < SINKRON_KEYS.length; i++) {
+        const k = SINKRON_KEYS[i];
+        if (!(k in remote)) continue;
+        const raw = lsRaw(k);
+        if (raw == null) { lsSet(k, remote[k]); continue; }
+        let lokal; try { lokal = JSON.parse(raw); } catch (e) { continue; }
+        lsSet(k, k === K.users ? sbGabungUsers(remote[k], lokal) : sbGabung(remote[k], lokal));
+      }
+    } finally { _snDalam = false; }
+  }
+
+  function sbNaik() { /* unggah snapshot ke tabel user_data (upsert per pengguna) */
+    if (!SB.aktif || !SB.akses || !SB.uid) return Promise.resolve(false);
+    return sbHttp("/rest/v1/user_data?on_conflict=id", {
+      method: "POST",
+      body: JSON.stringify({ id: SB.uid, data: sbIsi() })
+    }).then(r => {
+      if (!r.ok) return false;
+      const baris = (Array.isArray(r.json) && r.json[0]) || null;
+      snCatat(baris ? String(baris.updated_at || "") : (_snServer || "terunggah"));
+      _snLokal = false;
+      return true;
+    }).catch(() => false);
+  }
+  function sbSinkron() { /* tarik bila server lebih baru, unggah bila lokal lebih baru */
+    if (!SB.aktif || !SB.akses || !SB.uid || _snSibuk) return Promise.resolve(false);
+    _snSibuk = true;
+    const selesai = x => { _snSibuk = false; return x; };
+    return sbHttp("/rest/v1/user_data?id=eq." + encodeURIComponent(SB.uid) + "&select=data,updated_at")
+      .then(r => {
+        const baris = (r.ok && Array.isArray(r.json) && r.json[0]) || null;
+        const remote = (baris && baris.data && typeof baris.data === "object") ? baris.data : null;
+        const wServer = baris ? String(baris.updated_at || "") : "";
+        if (!_snServer && remote) { sbGabungkan(remote); return sbNaik().then(selesai); }
+        const serverBaru = !!baris && wServer !== _snServer;
+        if (serverBaru && remote && !_snLokal) {
+          sbTerapkan(remote); snCatat(wServer); _snLokal = false; return selesai(true);
+        }
+        if (_snLokal || !baris) return sbNaik().then(selesai);
+        snCatat(wServer); _snLokal = false; return selesai(true);
+      })
+      .catch(() => selesai(false));
+  }
+  function sbTandai() { /* dipanggil tiap lsSet menyentuh kunci yang disinkron (debounce 1,5 dtk) */
+    if (!SB.aktif) return;
+    _snLokal = true;
+    if (_snTimer) clearTimeout(_snTimer);
+    _snTimer = setTimeout(() => { _snTimer = null; sbSinkron(); }, 1500);
+  }
+  function sbSambungSesi() { /* saat aplikasi dibuka ulang: pakai token tersimpan → sinkron */
+    if (!SB.aktif || !SB.refresh) return Promise.resolve(false);
+    if (!SB.akses) SB.akses = "";
+    return sbSinkron();
+  }
+  function sbSambungAkun(u, sandi) { /* sesudah masuk lokal: sambungkan akun ke Supabase (asinkron) */
+    if (!SB.aktif || !u || !u.email || !sandi) return Promise.resolve(false);
+    return sbAuth("POST", "token?grant_type=password", { email: u.email, password: sandi }).then(r => {
+      if (r.ok && r.json && r.json.access_token) { sbSimpanSesiAuth(r.json); return sbSinkron(); }
+      /* akun belum ada di Supabase → daftarkan diam-diam agar bisa dipakai di perangkat lain */
+      return sbAuth("POST", "signup", {
+        email: u.email, password: sandi,
+        data: { nama: u.nama, peran: u.peran, jenjang: u.jenjang || "" }
+      }).then(x => {
+        if (x.ok && x.json && x.json.session && x.json.session.access_token) {
+          sbSimpanSesiAuth(x.json.session); return sbSinkron();
+        }
+        /* konfirmasi email masih aktif di Supabase → ingatkan pengguna sekali */
+        if (x.ok && x.json && x.json.confirmation_sent_at) {
+          toast(ikon("i-mail") + " Cek Gmail Anda untuk <b>konfirmasi pendaftaran</b> — setelah itu akun bisa dipakai di perangkat lain.");
+        }
+        return false;
+      });
+    }).catch(() => false);
+  }
+  function sbEmailDariToken(tok) {
+    try {
+      const p = String(tok).split(".")[1].replace(/-/g, "+").replace(/_/g, "/");
+      return String((JSON.parse(atob(p)) || {}).email || "");
+    } catch (e) { return ""; }
+  }
+  /* Catat akun yang hanya ada di Supabase (dibuat perangkat lain) ke penyimpanan lokal,
+     memakai metadata pendaftaran / tabel profiles agar peran & jenjang tetap benar. */
+  function sbCatatAkunOnline(usr, email, pass) {
+    const meta = (usr && usr.user_metadata) || {};
+    const buat = (d) => {
+      const users = daftarUsers();
+      if (users.some(x => x.email && String(x.email).toLowerCase() === String(email).toLowerCase())) return true;
+      const rec = {
+        nama: d.nama || String(email).split("@")[0], email: email, pass: sandiBaru(pass),
+        peran: d.peran || "siswa", jenjang: d.jenjang || null, tgl: new Date().toISOString()
+      };
+      if (d.verif === "menunggu") rec.verif = "menunggu";
+      if (d.nonaktif) rec.nonaktif = true;
+      users.push(rec); simpanUsers(users);
+      return true;
+    };
+    if (meta.peran) return Promise.resolve(buat({ nama: meta.nama, peran: meta.peran, jenjang: meta.jenjang || null }));
+    if (!SB.akses || !SB.uid) return Promise.resolve(false);
+    return sbHttp("/rest/v1/profiles?select=nama,peran,jenjang,verif,nonaktif&id=eq." + encodeURIComponent(SB.uid))
+      .then(r => {
+        const p = (r.ok && Array.isArray(r.json) && r.json[0]) || null;
+        if (!p || !p.peran) return false;
+        return buat({
+          nama: p.nama, peran: p.peran, jenjang: p.jenjang || null,
+          verif: p.verif, nonaktif: p.nonaktif
+        });
+      }).catch(() => false);
+  }
+  function sbTautanPemulihan() { /* deteksi tautan reset dari Gmail: #access_token=...&type=recovery */
+    const amb = (s, k) => { const m = String(s || "").match(new RegExp("[#&?]" + k + "=([^&]+)")); return m ? decodeURIComponent(m[1]) : ""; };
+    const h = location.hash || "", q = location.search || "";
+    const tok = amb(h, "access_token") || amb(q, "access_token");
+    const kode = amb(h, "code") || amb(q, "code");
+    const tipe = amb(h, "type") || amb(q, "type");
+    if (!tok && !kode) return null;
+    if (tipe && tipe !== "recovery") return null; /* undangan/konfirmasi — biarkan */
+    return { token: tok, kode: kode, refresh: amb(h, "refresh_token") || amb(q, "refresh_token"), type: tipe || "recovery" };
+  }
+  function sbMintaPulih(email) { /* kirim email pemulihan Supabase (masuk ke Gmail) */
+    return sbAuth("POST", "recover", { email: email });
+  }
+  function sbTerapkanSandi(baru) { /* set sandi baru memakai token dari tautan Gmail */
+    if (!SB.aktif || !SB.akses) return Promise.resolve(false);
+    return fetch(SB.url + "/auth/v1/user", {
+      method: "PUT",
+      headers: { apikey: SB.key, Authorization: "Bearer " + SB.akses, "Content-Type": "application/json" },
+      body: JSON.stringify({ password: baru })
+    }).then(r => r.ok).catch(() => false);
+  }
+
   function lsGet(k, def) {
     try { const v = localStorage.getItem(k); return v == null ? def : JSON.parse(v); }
     catch (e) { return def; }
   }
-  function lsSet(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { } }
+  function lsSet(k, v) {
+    try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { }
+    /* penanda perubahan → jadwalkan unggah (hanya bila mode online aktif) */
+    if (!_snDalam && SINKRON_KEYS.indexOf(k) > -1) sbTandai();
+  }
   function esc(s) {
     return String(s == null ? "" : s).replace(/[&<>"']/g, c =>
       ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -313,7 +619,7 @@
   function lsRaw(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
   function resetSesi() { _sRaw = lsRaw(K.sesi); _sVal = null; _sSampai = 0; }
   function berhentiSesi(alasan, insiden) {
-    lsSet(K.sesi, null); resetSesi();
+    lsSet(K.sesi, null); resetSesi(); sbPutus();
     if (_sSibuk) return;
     _sSibuk = true;
     try {
@@ -346,7 +652,7 @@
     /* paksa validasi ulang pada pembacaan berikutnya (jangan anggap benar tanpa cek) */
     _sRaw = "(basi)"; _sVal = null; _sSampai = 0;
   }
-  function hapusSesi() { lsSet(K.sesi, null); resetSesi(); }
+  function hapusSesi() { lsSet(K.sesi, null); resetSesi(); sbPutus(); }
   function simpanUsers(users) { /* tulis dengan tanda integritas pada tiap catatan */
     const bersih = (users || []).map(u => {
       const c = Object.assign({}, u);
@@ -986,6 +1292,8 @@
   }
 
   function terapkanRute() {
+    /* Tautan pemulihan sandi dari Gmail (#access_token=...&type=recovery) */
+    if (sbTautanPemulihan()) { sbBukaPemulihan(); return; }
     const h = (location.hash || "#/").replace(/^#/, "");
     const bagian = h.split("/").filter(Boolean); // ["r","mahir"]
     tutupModal();
@@ -997,6 +1305,7 @@
     if (!view) return;
 
     if (bagian[0] === "masuk") { view.innerHTML = viewMasuk(); pascaMasuk(); }
+    else if (bagian[0] === "lupa") { view.innerHTML = viewLupa(); pascaLupa(); }
     else if (bagian[0] === "daftar") { view.innerHTML = viewDaftar(); pascaDaftar(); }
     else if (bagian[0] === "pilih") {
       const s = sesi();
@@ -1124,6 +1433,211 @@
   }
 
   /* ============================================================
+     TAMPILAN: LUPA KATA SANDI (permintaan reset → Gmail)
+     ------------------------------------------------------------
+     · Mode online : permintaan dikirim ke Supabase Auth, lalu tautan
+       "Atur Ulang Kata Sandi" masuk ke Gmail pengguna. Tautan itu
+       kembali ke #/lupa (token dibaca dari URL) → form sandi baru.
+     · Mode lokal  : kode verifikasi6 digit dikirim lewat jembatan
+       email Google (NOTIF_WEBHOOK) bila disetel; tanpa itu, pengguna
+       diarahkan ke pengelola platform.
+     ============================================================ */
+  const LUPA = { tahap: "kirim", email: "", kode: "", sampai: 0, token: "" };
+
+  function kirimEmailReset(email, kode) { /* lapis email Google (mode lokal) */
+    try {
+      const url = konfigNotif();
+      if (!/^https:\/\//.test(url) || typeof fetch !== "function") return;
+      fetch(url, {
+        method: "POST",
+        mode: "no-cors",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify({
+          aplikasi: "Kuradapt",
+          ke: [email],
+          subjek: "Kuradapt · Atur Ulang Kata Sandi",
+          pesan: "Halo,\n\nKode verifikasi untuk mengatur ulang kata sandi Kuradapt Anda:\n\n    " + kode +
+            "\n\nKode berlaku 10 menit. Bila Anda tidak meminta ini, abaikan pesan ini.\n\nBuka aplikasi: " +
+            location.origin + location.pathname + "#/lupa",
+          dari: "Kuradapt · Sistem Keamanan",
+          tipe: "keamanan",
+          tgl: new Date().toLocaleString("id-ID")
+        })
+      }).catch(() => { });
+    } catch (e) { }
+  }
+
+  function lupaIsi() {
+    if (LUPA.tahap === "kirim") {
+      return '<div class="field" id="fEmailL"><label for="emailL">Email terdaftar</label>' +
+        '<span class="inp-wrap">' + ikon("i-mail") +
+        '<input type="email" id="emailL" placeholder="nama@email.com" autocomplete="email" value="' + esc(LUPA.email) + '"></span>' +
+        '<span class="errmsg">Email belum diisi dengan benar.</span></div>' +
+        '<button class="btn btn-primary btn-block btn-lg" type="submit">' + ikon("i-arrow") + ' Kirim Permintaan Reset</button>' +
+        '<p class="form-note" style="margin-top:14px">' + ikon(SB.aktif ? "i-cloud" : "i-shield") + ' ' +
+        (SB.aktif ? "Tautan atur ulang sandi akan dikirim ke Gmail Anda."
+          : "Mode lokal: kode verifikasi dikirim lewat email (butuh jembatan email Google).") + '</p>';
+    }
+    if (LUPA.tahap === "terkirim") {
+      return '<div class="lupa-ok">' + ikon("i-check") + '<b>Tautan pemulihan dikirim</b>' +
+        '<p>Periksa kotak masuk Gmail Anda — bila tak ada, cek folder <b>Spam</b> / <b>Promosi</b>. ' +
+        'Buka tautan <b>Atur Ulang Kata Sandi</b> untuk membuat sandi baru.</p></div>' +
+        '<button class="btn btn-block" type="button" id="lupaUlang">Kirim ulang tautan</button>';
+    }
+    /* tahap "kode" (mode lokal) & "ganti" (tautan dari Gmail) */
+    let h = "";
+    if (LUPA.tahap === "kode") {
+      h += '<div class="field" id="fKodeL"><label for="kodeL">Kode Verifikasi</label><span class="inp-wrap">' + ikon("i-shield") +
+        '<input id="kodeL" placeholder="6 digit kode" inputmode="numeric" autocomplete="one-time-code"></span>' +
+        '<span class="errmsg">Kode salah atau kedaluwarsa (berlaku 10 menit).</span></div>';
+    }
+    if (!LUPA.email) {
+      h += '<div class="field" id="fEmailL2"><label for="emailL2">Email</label><span class="inp-wrap">' + ikon("i-mail") +
+        '<input type="email" id="emailL2" placeholder="nama@email.com" autocomplete="email"></span>' +
+        '<span class="errmsg">Email belum diisi dengan benar.</span></div>';
+    }
+    h += '<div class="field" id="fSandiL"><label for="sandiL">Kata Sandi Baru</label><span class="inp-wrap">' + ikon("i-lock") +
+      '<input type="password" id="sandiL" placeholder="••••••••" autocomplete="new-password"></span>' +
+      '<span class="errmsg">Kata sandi minimal 6 karakter.</span></div>' +
+      '<div class="field" id="fSandiL2"><label for="sandiL2">Ulangi Kata Sandi</label><span class="inp-wrap">' + ikon("i-lock") +
+      '<input type="password" id="sandiL2" placeholder="••••••••" autocomplete="new-password"></span>' +
+      '<span class="errmsg">Kata sandi tidak sama.</span></div>' +
+      '<button class="btn btn-primary btn-block btn-lg" type="submit">' + ikon("i-check") + ' Simpan Kata Sandi Baru</button>';
+    if (LUPA.tahap === "kode") {
+      h += '<p class="form-note" style="margin-top:14px">' + ikon("i-mail") + ' Kode dikirim ke <b>' + esc(LUPA.email) + '</b>.</p>';
+    }
+    return h;
+  }
+
+  function viewLupa() {
+    return '<div class="auth-split">' +
+      '<aside class="auth-visual">' +
+      '<span class="av-glow g1"></span><span class="av-glow g2"></span>' +
+      '<div class="av-body">' +
+      '<span class="chip brand" style="background:rgba(255,255,255,.14);border-color:rgba(255,255,255,.3);color:#fff;margin-bottom:16px">' + ikon("i-shield") + ' Pemulihan Akun</span>' +
+      '<h2>Lupa kata sandi?</h2>' +
+      '<p>Tenang — masukkan email terdaftar, kami kirim tautan atur ulang sandi ke Gmail Anda. Sandi lama tetap aman sampai Anda menggantinya.</p>' +
+      '<ul class="steps">' +
+      '<li><b>1</b><span>Masukkan email yang terdaftar di Kuradapt.</span></li>' +
+      '<li><b>2</b><span>Periksa Gmail (Spam/Promosi bila perlu).</span></li>' +
+      '<li><b>3</b><span>Buka tautan & buat kata sandi baru.</span></li>' +
+      '</ul></div>' +
+      '<div class="quote">“<b>Kurikulum Hidup, Masa Depan Terarah.</b> — Belajar Adaptif, Kerja Responsif.”</div>' +
+      '</aside>' +
+      '<div class="auth-form-side"><form class="auth-form" id="formLupa" novalidate>' +
+      '<div class="af-head"><h1>Lupa Kata Sandi</h1><p>Kami bantu atur ulang sandi akun Kuradapt Anda.</p></div>' +
+      lupaIsi() +
+      '<p class="auth-alt" style="margin-top:16px"><a href="#/masuk">' + ikon("i-arrow") + ' Kembali ke halaman Masuk</a></p>' +
+      '<p class="auth-alt" style="margin-top:8px"><a href="#/pengumuman">' + ikon("i-bell") + ' Lihat papan pengumuman</a></p>' +
+      '</form></div></div>';
+  }
+
+  function pascaLupa() {
+    const ul = document.getElementById("lupaUlang");
+    if (ul) ul.onclick = () => { LUPA.tahap = "kirim"; LUPA.kode = ""; terapkanRute(); };
+    const f = document.getElementById("formLupa");
+    if (!f) return;
+    f.onsubmit = e => {
+      e.preventDefault();
+      const setErr = (id, bad) => { const el = document.getElementById(id); if (el) el.classList.toggle("err", bad); return !bad; };
+      const amb = id => { const el = document.getElementById(id); return el ? String(el.value || "").trim() : ""; };
+      const emailSah = x => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(x);
+
+      /* ---- langkah 1: kirim permintaan reset ---- */
+      if (LUPA.tahap === "kirim") {
+        const email = amb("emailL");
+        if (!setErr("fEmailL", !emailSah(email))) { toast(ikon("i-warn") + " Periksa kembali isian Anda", "no"); return; }
+        if (SB.aktif) {
+          sbMintaPulih(email).then(r => {
+            if (r.offline || !(r.status > 0 && r.status < 500)) {
+              toast(ikon("i-x") + " Permintaan gagal dikirim — coba lagi beberapa saat", "no"); return;
+            }
+            LUPA.email = email; LUPA.tahap = "terkirim"; terapkanRute();
+            toast(ikon("i-check") + " Tautan pemulihan dikirim ke <b>" + esc(email) + "</b>");
+          });
+          return;
+        }
+        /* mode lokal */
+        if (!cariUser(email)) { setErr("fEmailL", true); toast(ikon("i-x") + " Email tidak terdaftar di perangkat ini", "no"); return; }
+        if (!/^https:\/\//.test(konfigNotif())) {
+          toast(ikon("i-shield") + " Reset sandi mode lokal dijalankan pengelola — silakan hubungi <b>Admin Sistem</b> Kuradapt.", "no");
+          return;
+        }
+        const kode = String(Math.floor(100000 + Math.random() * 900000));
+        const simpan = lsGet("kuradapt_reset", {}) || {};
+        simpan[email.toLowerCase()] = { kode: kode, sampai: Date.now() + 600000 };
+        lsSet("kuradapt_reset", simpan);
+        LUPA.email = email; LUPA.kode = kode; LUPA.sampai = Date.now() + 600000;
+        kirimEmailReset(email, kode);
+        LUPA.tahap = "kode"; terapkanRute();
+        toast(ikon("i-mail") + " Kode verifikasi dikirim ke Gmail <b>" + esc(email) + "</b>");
+        return;
+      }
+
+      /* ---- langkah 2a: kode verifikasi (mode lokal) ---- */
+      if (LUPA.tahap === "kode") {
+        const kode = amb("kodeL"), sandi = amb("sandiL"), sandi2 = amb("sandiL2");
+        let oke = setErr("fKodeL", !LUPA.kode || kode !== LUPA.kode || Date.now() > LUPA.sampai);
+        oke = setErr("fSandiL", sandi.length < 6) && oke;
+        oke = setErr("fSandiL2", sandi2.length < 6 || sandi !== sandi2) && oke;
+        if (!oke) { toast(ikon("i-x") + " Periksa kembali isian Anda", "no"); return; }
+        const u = cariUser(LUPA.email);
+        if (!u) { toast(ikon("i-x") + " Email tidak terdaftar", "no"); return; }
+        perbaruiSandi(u, sandi);
+        try { const r = lsGet("kuradapt_reset", {}) || {}; delete r[LUPA.email.toLowerCase()]; lsSet("kuradapt_reset", r); } catch (err) { }
+        LUPA.tahap = "kirim"; LUPA.kode = ""; LUPA.email = "";
+        toast(ikon("i-check") + " Kata sandi berhasil diatur ulang — silakan masuk");
+        navigasi("#/masuk");
+        return;
+      }
+
+      /* ---- langkah 2b: sandi baru via tautan Gmail ---- */
+      const sandi = amb("sandiL"), sandi2 = amb("sandiL2");
+      let oke = true;
+      if (!LUPA.email) oke = setErr("fEmailL2", !emailSah(amb("emailL2"))) && oke;
+      oke = setErr("fSandiL", sandi.length < 6) && oke;
+      oke = setErr("fSandiL2", sandi2.length < 6 || sandi !== sandi2) && oke;
+      if (!oke) { toast(ikon("i-x") + " Periksa kembali isian Anda", "no"); return; }
+      const email = LUPA.email || amb("emailL2");
+      const selesai = sukses => {
+        if (!sukses) {
+          toast(ikon("i-x") + " Tautan sudah kedaluwarsa — minta tautan baru", "no");
+          LUPA.tahap = "kirim"; LUPA.token = ""; LUPA.email = ""; terapkanRute(); return;
+        }
+        const u = cariUser(email);
+        if (u) perbaruiSandi(u, sandi);
+        catatLog("keamanan", "Kata sandi diatur ulang lewat tautan pemulihan: " + email, u ? u.nama : "Sistem");
+        LUPA.tahap = "kirim"; LUPA.token = ""; LUPA.email = "";
+        sbPutus();
+        toast(ikon("i-check") + " Kata sandi baru tersimpan — silakan masuk");
+        navigasi("#/masuk");
+      };
+      if (!SB.aktif || !LUPA.token) { selesai(false); return; }
+      sbTerapkanSandi(sandi).then(selesai);
+    };
+  }
+
+  function sbBukaPemulihan() { /* tautan dari Gmail dibuka → bersihkan URL, tampilkan form sandi baru */
+    const t = sbTautanPemulihan();
+    if (!t) return false;
+    try { history.replaceState(null, "", location.pathname + "#/lupa"); } catch (e) { location.hash = "#/lupa"; }
+    if (!SB.aktif || !t.token) {
+      LUPA.tahap = "kirim"; LUPA.email = ""; LUPA.token = "";
+      terapkanRute();
+      if (t.kode) toast(ikon("i-x") + " Tautan reset tidak sah atau sudah kedaluwarsa — minta ulang", "no");
+      return true;
+    }
+    LUPA.tahap = "ganti";
+    LUPA.token = t.token;
+    LUPA.email = sbEmailDariToken(t.token) || "";
+    SB.akses = t.token;
+    SB.refresh = t.refresh || "";
+    sbSimpanToken({ akses: SB.akses, refresh: SB.refresh, uid: SB.uid, email: LUPA.email });
+    terapkanRute();
+    return true;
+  }
+
+  /* ============================================================
      TAMPILAN: MASUK (desain A — split panel gelap)
      ============================================================ */
   function viewMasuk() {
@@ -1151,12 +1665,14 @@
       '<div class="field" id="fPassM"><label for="passM">Kata Sandi</label><span class="inp-wrap">' + ikon("i-lock") +
       '<input type="password" id="passM" placeholder="••••••••" autocomplete="current-password"></span>' +
       '<span class="errmsg">Kata sandi minimal 6 karakter.</span></div>' +
+      '<p class="auth-alt forgot"><a href="#/lupa">' + ikon("i-lock") + ' Lupa kata sandi?</a></p>' +
       '<div class="field" id="fMfa" style="display:none"><label for="mfaM">Kode Keamanan (MFA)</label><span class="inp-wrap">' + ikon("i-shield") +
       '<input id="mfaM" placeholder="6 digit kode" inputmode="numeric" autocomplete="one-time-code"></span>' +
       '<span class="errmsg">Kode salah atau kedaluwarsa (berlaku 5 menit).</span>' +
       '<span class="form-note" id="mfaCatatan" style="display:none"></span></div>' +
       '<button class="btn btn-primary btn-block btn-lg" type="submit">' + ikon("i-arrow") + ' Masuk ke Ruang Saya</button>' +
-      '<p class="form-note" style="margin-top:14px">' + ikon("i-shield") + ' Mode lokal: data tersimpan aman di perangkat ini. Belum punya akun?</p>' +
+      '<p class="form-note" style="margin-top:14px">' + ikon(SB.aktif ? "i-cloud" : "i-shield") + ' ' +
+      (SB.aktif ? "Mode online: akun & data tersinkron antar perangkat." : "Mode lokal: data tersimpan aman di perangkat ini.") + '</p>' +
       '<p class="auth-alt">Belum punya akun? <a href="#/daftar"><b>Daftar gratis sekarang</b></a></p>' +
       '<p class="auth-alt" style="margin-top:8px"><a href="#/pengumuman">' + ikon("i-bell") + ' Lihat papan pengumuman</a></p>' +
       '</form></div></div>';
@@ -1165,9 +1681,10 @@
   function pascaMasuk() {
     const f = document.getElementById("formMasuk");
     if (!f) return;
-    let tahanMfa = null; /* pengguna lolos sandi, menunggu kode MFA */
-    f.onsubmit = e => {
-      e.preventDefault();
+    let tahanMfa = null, sudahOnline = false; /* pengguna lolos sandi, menunggu kode MFA */
+    f.onsubmit = e => { e.preventDefault(); proses(true); };
+
+    function proses(online) {
       const email = document.getElementById("emailM").value.trim();
       const pass = document.getElementById("passM").value;
       let oke = true;
@@ -1184,7 +1701,7 @@
         const u = tahanMfa; tahanMfa = null;
         document.getElementById("fMfa").style.display = "none";
         catatLog("keamanan", "Berhasil masuk dengan MFA: " + u.email, u.nama);
-        selesaikanMasuk(u);
+        selesaikanMasuk(u, pass);
         return;
       }
       setErr("fEmailM", !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email));
@@ -1200,6 +1717,32 @@
       }
       const u = cariUser(email);
       if (!u || !cocokSandi(pass, u)) {
+        /* Mode online: akun bisa jadi dibuat di perangkat lain —
+           coba masuk ke Supabase, tarik data (sinkron), lalu ulangi alur lokal. */
+        if (online && SB.aktif && !sudahOnline) {
+          sudahOnline = true;
+          const tm = f.querySelector('button[type="submit"]');
+          if (tm) tm.disabled = true;
+          sbAuth("POST", "token?grant_type=password", { email: email, password: pass }).then(r => {
+            if (tm) tm.disabled = false;
+            if (!(r.ok && r.json && r.json.access_token)) {
+              if (r.json && r.json.error_code === "email_not_confirmed") {
+                toast(ikon("i-mail") + " Email belum <b>dikonfirmasi</b> — buka tautan konfirmasi di Gmail Anda, lalu masuk kembali.", "no");
+                return;
+              }
+              proses(false); return;
+            }
+            sbSimpanSesiAuth(r.json);
+            return sbSinkron().then(() => {
+              if (cariUser(email)) { hapusGagal(email); proses(false); return; }
+              sbCatatAkunOnline(r.json.user, email, pass).then(x => {
+                if (x) { hapusGagal(email); proses(false); }
+                else toast(ikon("i-warn") + " Akun ditemukan di server, tetapi data profilnya belum tersinkron. Coba lagi beberapa saat.", "no");
+              });
+            });
+          }).catch(() => { if (tm) tm.disabled = false; proses(false); });
+          return;
+        }
         const g = catatGagal(email);
         setErr("fPassM", true);
         const sisaG = g.sampai ? Math.max(1, Math.ceil((g.sampai - Date.now()) / 60000)) : 0;
@@ -1224,14 +1767,15 @@
         const el = document.getElementById("mfaM"); if (el) el.focus();
         return;
       }
-      selesaikanMasuk(u);
-    };
+      selesaikanMasuk(u, pass);
+    }
 
-    function selesaikanMasuk(u) {
+    function selesaikanMasuk(u, sandi) {
       simpanSesi({ email: u.email, nama: u.nama, peran: u.peran, jenjang: u.jenjang });
       catatLog("masuk", "Berhasil masuk: " + u.email, u.nama);
       toast(ikon("i-check") + " Selamat datang, <b>" + esc(u.nama) + "</b>!");
       navigasi("#/pilih");
+      if (sandi) sbSambungAkun(u, sandi); /* sambungkan ke Supabase (asinkron, tanpa mengubah alur) */
     }
   }
 
@@ -1498,6 +2042,7 @@
       simpanSesi({ email: u.email, nama: u.nama, peran: u.peran, jenjang: u.jenjang });
       toast(ikon("i-party") + " Akun dibuka! Selamat datang, <b>" + esc(u.nama) + "</b>");
       navigasi("#/pilih");
+      sbSambungAkun(u, pass); /* daftarkan ke Supabase (asinkron) agar bisa dipakai di perangkat lain */
     };
     setLangkah(1);
     tampilKodePeng();
@@ -4251,6 +4796,7 @@
 
   /* ---------------- Inisialisasi ---------------- */
   function init() {
+    sbInit(); /* baca konfigurasi Supabase (mode online bila config diisi) */
     terapkanTema(lsGet(K.tema, "light"));
 
     const bt = document.getElementById("btnTheme"); if (bt) bt.onclick = gantiTema;
@@ -4293,6 +4839,9 @@
     window.addEventListener("hashchange", terapkanRute);
     terapkanRute();
 
+    /* mode online: bila sesi Supabase tersimpan, tarik data terbaru (asinkron) */
+    sbSambungSesi();
+
     /* PWA: daftarkan service worker hanya saat dibuka lewat http(s) */
     try {
       if ("serviceWorker" in navigator && /^https?:$/.test(location.protocol)) {
@@ -4327,6 +4876,10 @@
     simpanDok, daftarDok: dokMeta, ambilDok, hapusDok, unduhDok,
     mulaiQuiz, gantiTema, terapkanTema, bukaRuang,
     init, navigasi, renderRuang, renderTab, viewLanding, viewMasuk, viewDaftar,
+    /* v3.5: lupa/reset password + mode online Supabase */
+    viewLupa, pascaLupa, sbAktif: () => SB.aktif, sbStatus: () => ({
+      aktif: SB.aktif, url: SB.url, tersambung: !!SB.akses, uid: SB.uid
+    }), sbSinkron, sbPutus,
     /* peran baru: admin & operator, kegiatan, undangan */
     jenjangSaya, bisaTulis, panelKelola, PERAN,
     semuaKegiatan, kegiatanRuang, simpanKegiatanBaru, ubahKegiatan, statusKegiatan, jenisKegiatan,

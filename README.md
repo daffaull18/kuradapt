@@ -108,6 +108,9 @@ Versi: **3.4.0** · Gratis · Bisa offline · Bisa di-install di HP (PWA)
 - **Perpustakaan mode baca (v3.4.0)**: tombol **Unduh .txt dihapus** — judul buku kini dibuka sebagai **artikel baca penuh di halaman** (`Baca` → mode baca → kembali ke daftar), jadi tidak ada lagi unduhan berkas teks.
 - **Ruang live kegiatan (v3.4.0)**: tombol **Gabung Kegiatan** kini membuka **ruang kegiatan sungguhan** — daftar kehadiran *live*, **chat ruangan** (tersimpan & sinkron antar jendela), **angkat tangan**, serta **tautan video Zoom / Google Meet** milik tuan rumah yang dibuka lewat tombol *Gabung Video*. **Aturan tuan rumah**: peserta yang datang saat guru/dosen pembuat belum hadir melihat layar *"Menunggu tuan rumah"*; alat tuan rumah (mulai kegiatan, pasang tautan) hanya muncul untuk tenaga pendidik ruang.
 - **Bank soal diperkaya (v3.4.1)**: jumlah soal latihan **756 → 1.253 soal** di seluruh 5 jenjang (126 bab) — tiap bab kini **8–12 soal bervariasi** sehingga jumlah soal tiap mata pelajaran berbeda-beda (tidak lagi 24 seragam), seluruhnya ber-pembahasan dan berimbang kunci jawabannya.
+- **Mode online Supabase aktif (v3.5.0)**: `config.js` sudah terisi project Supabase `kuradapt` — pendaftaran & masuk kini memakai **Supabase Auth**, lalu seluruh data (akun, pengumuman, nilai, progres, dokumen, kegiatan, log, dst.) **otomatis diunggah/diturunkan** ke tabel `user_data` (debounce 1,5 detik, token diperpanjang otomatis, gabungan dua arah saat perangkat baru pertama nyambung sehingga **tidak ada data yang hilang**). Jalur lokal tetap lebih dulu: bila jaringan/Supabase gagal, aplikasi **tetap berfungsi penuh seperti mode lokal** (dan bila `config.js` dikosongkan, seluruh lapisan online mati total).
+- **Lupa / atur ulang kata sandi (v3.5.0)**: tautan **"Lupa kata sandi?"** di halaman masuk → rute `#/lupa`. Mode online: permintaan dikirim Supabase Auth dan **tautan reset masuk ke Gmail pengguna** → dibuka → form sandi baru → sandi diperbarui di Supabase **dan** di penyimpanan lokal. Mode lokal: kode verifikasi 6 digit dikirim lewat jembatan email Google (`NOTIF_WEBHOOK`), atau pesan "hubungi Admin Sistem" bila belum disetel.
+- **Navbar menyatu dengan halaman (v3.5.0)**: latar topbar disamakan dengan latar halaman, garis pemisah & efek kaca dihapus — navbar kini terbaca sebagai bagian halaman, bukan kartu terpisah yang mengambang (saran perbaikan Abang).
 
 ### ✅ Lapis 3 — "Dipercaya Sekolah"
 - **Peta Kurikulum Merdeka** (tombol 📜 di Bank Silabus): CP & TP per fase — SD Fase B (IPAS), SMP Fase D (IPA), SMA Fase F (Informatika), SMK (OKUPASI/LSP), Kuliah (CPL Prodi TI).
@@ -117,19 +120,20 @@ Versi: **3.4.0** · Gratis · Bisa offline · Bisa di-install di HP (PWA)
 
 ---
 
-## ☁️ Aktifkan Mode Online (Supabase, gratis ±10 menit)
+## ☁️ Mode Online (Supabase) — SUDAH DIISI untuk project ini
 
-1. Daftar di **supabase.com** → *Create new project* (region: Singapore).
-2. Buka **SQL Editor** → jalankan isi file `supabase-schema.sql` (sudah disediakan).
-3. Buka **Settings → API** → salin *Project URL* dan *anon public key*.
-4. Tempel ke `config.js`:
-   ```js
-   SUPABASE_URL: "https://xxxx.supabase.co",
-   SUPABASE_ANON_KEY: "eyJhbGciOi..."
-   ```
-5. Simpan → buka aplikasi → tombol **Masuk** kini memakai akun sungguhan, data tersinkron antar perangkat.
+`config.js` sudah berisi project Supabase **`kuradapt`** (`qprrdwvwcpivfjgxqkdt`).
+Agar login lintas perangkat & link **Lupa Kata Sandi** berjalan, tinggal 2 langkah dashboard
+(detail lengkap di `DEPLOY.md` Langkah 2 & 5):
 
-> Tanpa langkah di atas, aplikasi tetap **100% berjalan** dalam mode lokal.
+1. **SQL Editor** → jalankan isi `supabase-schema.sql` (sekali saja).
+2. **Authentication → URL Configuration** → *Site URL* & *Redirect URL*:
+   `https://daffaull18.github.io/kuradapt/`
+3. **Authentication → Email** → matikan **Confirm email** (disarankan).
+
+> Tanpa langkah di atas, aplikasi tetap **100% berjalan** dalam mode lokal — hanya
+> sinkronisasi antar perangkat & pengiriman email reset yang belum aktif.
+> Kosongkan `SUPABASE_URL`/`SUPABASE_ANON_KEY` untuk kembali murni mode lokal.
 
 ---
 

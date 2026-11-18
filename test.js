@@ -38,7 +38,16 @@ const dom = new JSDOM(html, {
 const w = dom.window, d = w.document;
 /* muat konfigurasi + konten jenjang + aplikasi (script src tidak dieksekusi jsdom) */
 ["boot.js", "boot-route.js", "config.js", "data-sd.js", "data-smp.js", "data-sma.js", "data-smk.js", "data-kuliah.js", "data-wilayah.js", "app.js"].forEach(f => {
-  try { w.eval(fs.readFileSync(DIR + "\\" + f, "utf8")); }
+  try {
+    w.eval(fs.readFileSync(DIR + "\\" + f, "utf8"));
+    /* Mode online Supabase DIMATIKAN saat pengujian: config dibaca app.js
+       tepat saat init (setelah config.js dimuat), jadi dikosongkan di sini —
+       seluruh tes selalu berjalan di jalur lokal seperti sediakala. */
+    if (f === "config.js" && w.KURADAPT_CONFIG) {
+      w.KURADAPT_CONFIG.SUPABASE_URL = "";
+      w.KURADAPT_CONFIG.SUPABASE_ANON_KEY = "";
+    }
+  }
   catch (e) { errors.push("eval " + f + ": " + e.message); }
 });
 /* berkas sumber untuk tes kontrak (CSP, skrip eksternal, dsb.) */
@@ -1224,7 +1233,7 @@ setTimeout(async () => {
   const hdr37 = fs.existsSync(DIR + "\\_headers") ? fs.readFileSync(DIR + "\\_headers", "utf8") : "";
   ok("_headers ikut mengizinkan script.google.com", /script\.google\.com/.test(hdr37));
   ok("config.js menyediakan kunci NOTIF_WEBHOOK", fs.readFileSync(DIR + "\\config.js", "utf8").indexOf("NOTIF_WEBHOOK") > -1);
-  ok("service worker memakai cache rilis v3.4.1", fs.readFileSync(DIR + "\\sw.js", "utf8").indexOf("kuradapt-v3.4.1") > -1);
+  ok("service worker memakai cache rilis v3.5.0", fs.readFileSync(DIR + "\\sw.js", "utf8").indexOf("kuradapt-v3.5.0") > -1);
   ok("styles.css memuat gaya panel & profil", /notif-panel/.test(css) && /profil-page/.test(css));
 
   /* ---- j. halaman #/admin: daftar pengguna, tombol profil & hapus ---- */
