@@ -218,6 +218,9 @@
     if (!SB.aktif || !SB.akses || !SB.uid) return Promise.resolve(false);
     return sbHttp("/rest/v1/user_data?on_conflict=id", {
       method: "POST",
+      /* wajib: tanpa "merge-duplicates" PostgREST memakai INSERT biasa →
+         baris pertama 201, pembaruan sesudahnya 409 (data tak pernah ter-update) */
+      headers: { Prefer: "resolution=merge-duplicates, return=representation" },
       body: JSON.stringify({ id: SB.uid, data: sbIsi() })
     }).then(r => {
       if (!r.ok) return false;
@@ -266,8 +269,11 @@
         email: u.email, password: sandi,
         data: { nama: u.nama, peran: u.peran, jenjang: u.jenjang || "" }
       }).then(x => {
-        if (x.ok && x.json && x.json.session && x.json.session.access_token) {
-          sbSimpanSesiAuth(x.json.session); return sbSinkron();
+        /* Supabase mengembalikan token di level atas (alur implicit) —
+           sebagian konfigurasi juga membungkusnya dalam { session }. */
+        const js = (x.json && (x.json.access_token ? x.json : (x.json.session && x.json.session.access_token ? x.json.session : null))) || null;
+        if (x.ok && js) {
+          sbSimpanSesiAuth(js); return sbSinkron();
         }
         /* konfirmasi email masih aktif di Supabase → ingatkan pengguna sekali */
         if (x.ok && x.json && x.json.confirmation_sent_at) {
@@ -689,10 +695,13 @@
   function cariUser(email) { return daftarUsers().find(u => u.email.toLowerCase() === String(email).toLowerCase()) || null; }
 
   /* ---------------- Tema ---------------- */
-  function terapkanTema(t) {
+  function terapkanTema(t, simpan) {
     const tema = t === "dark" ? "dark" : "light";
     document.documentElement.setAttribute("data-theme", tema);
-    lsSet(K.tema, tema);
+    /* simpan=false: saat boot belum ada tema tersimpan — nilai default BUKAN
+       pilihan pengguna, jangan ditulis. Bila ditulis, perangkat baru dianggap
+       "lokal menang" saat sinkron pertama → tema gelap dari server kalah. */
+    if (simpan !== false) lsSet(K.tema, tema);
     const meta = document.querySelector('meta[name="theme-color"]');
     if (meta) meta.setAttribute("content", tema === "dark" ? "#0a1020" : "#f6f8fc");
     const use = document.querySelector("#themeIcon use");
@@ -1684,9 +1693,11 @@
     let tahanMfa = null, sudahOnline = false; /* pengguna lolos sandi, menunggu kode MFA */
     f.onsubmit = e => { e.preventDefault(); proses(true); };
 
-    function proses(online) {
-      const email = document.getElementById("emailM").value.trim();
-      const pass = document.getElementById("passM").value;
+    function proses(online, emailPaksa, passPaksa) {
+      /* emailPaksa/passPaksa: dipakai saat lanjutan online — form bisa saja
+         sudah ter-render ulang di tengah permintaan jaringan, jangan andalkan DOM */
+      const email = emailPaksa != null ? emailPaksa : document.getElementById("emailM").value.trim();
+      const pass = passPaksa != null ? passPaksa : document.getElementById("passM").value;
       let oke = true;
       const setErr = (id, bad) => { const el = document.getElementById(id); if (el) el.classList.toggle("err", bad); if (bad) oke = false; };
       /* tahap kedua: verifikasi kode MFA */
@@ -1730,17 +1741,17 @@
                 toast(ikon("i-mail") + " Email belum <b>dikonfirmasi</b> — buka tautan konfirmasi di Gmail Anda, lalu masuk kembali.", "no");
                 return;
               }
-              proses(false); return;
+              proses(false, email, pass); return;
             }
             sbSimpanSesiAuth(r.json);
             return sbSinkron().then(() => {
-              if (cariUser(email)) { hapusGagal(email); proses(false); return; }
+              if (cariUser(email)) { hapusGagal(email); proses(false, email, pass); return; }
               sbCatatAkunOnline(r.json.user, email, pass).then(x => {
-                if (x) { hapusGagal(email); proses(false); }
+                if (x) { hapusGagal(email); proses(false, email, pass); }
                 else toast(ikon("i-warn") + " Akun ditemukan di server, tetapi data profilnya belum tersinkron. Coba lagi beberapa saat.", "no");
               });
             });
-          }).catch(() => { if (tm) tm.disabled = false; proses(false); });
+          }).catch(() => { if (tm) tm.disabled = false; proses(false, email, pass); });
           return;
         }
         const g = catatGagal(email);
@@ -4797,7 +4808,8 @@
   /* ---------------- Inisialisasi ---------------- */
   function init() {
     sbInit(); /* baca konfigurasi Supabase (mode online bila config diisi) */
-    terapkanTema(lsGet(K.tema, "light"));
+    const temaAwal = lsGet(K.tema, null);
+    terapkanTema(temaAwal || "light", temaAwal != null);
 
     const bt = document.getElementById("btnTheme"); if (bt) bt.onclick = gantiTema;
     const bm = document.getElementById("btnMenu"); if (bm) bm.onclick = bukaMenu;
