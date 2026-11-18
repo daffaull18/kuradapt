@@ -240,6 +240,13 @@ Kuradapt adalah karya **DAFFTECH** dan dilindungi hak cipta (lihat file `LICENSE
 ---
 
 ## 📅 Roadmap
+Rencana lengkap (fase, ide project baru DAFFTECH, timeline, aturan main) ada di **[`ROADMAP.md`](ROADMAP.md)**. Ringkasnya:
+- **Fase 0** — Cloudflare Pages + panduan guru + bug bash *(sekarang)*
+- **Fase 1** — Laporan/Rapor PDF + rekap kelas ← nilai jual terbesar
+- **Fase 2** — Tugas daring lintas akun (unggah ke Supabase Storage)
+- **Fase 3** — Hemat kuota/PWA, multi-bahasa, kuis live, bank soal bersama
+- **Fase 4** — Sekolah mandiri, PPDP bridge, kepatuhan UU PDP
+- **Project baru** — Absensi QR sekolah, PPDB online, perpustakaan QR, white-label
 - Uji coba (pilot) di 1–2 sekolah + umpan balik guru
 - Tugas daring: lampiran jawaban siswa berkas (unggah) lintas akun — butuh mode online *(pengiriman teks & status pengerjaan sudah berjalan di mode lokal)*
 - Mode hemat kuota untuk daerah 3T & laporan rapor mutu sekolah
